@@ -12,8 +12,9 @@ import ForgotPassword from "../ForgotPasswordPage";
 import ResendVerificationPage from "../ResendVerificationPage";
 import { useAuth } from "@/context/useAuth";
 import { useNavigate, Navigate, useLocation } from "react-router-dom";
+import { getApiBase } from "@/utils/apiConfig";
 
-const API_BASE = "http://127.0.0.1:8080";
+const API_BASE = getApiBase();
 
 export default function AuthRouter() {
   const { isAuthenticated, loading, login } = useAuth();

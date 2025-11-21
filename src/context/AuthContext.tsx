@@ -7,7 +7,9 @@ import React, {
   type ReactNode,
 } from "react";
 
-const API_BASE = "http://127.0.0.1:8080";
+import { getApiBase } from "@/utils/apiConfig";
+
+const API_BASE = getApiBase();
 
 export interface User {
   name: string;

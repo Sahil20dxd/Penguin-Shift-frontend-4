@@ -4,6 +4,7 @@
 // Shows friendly states: waiting, success, or failed.
 // --------------------------------------------------------------
 import React, { useEffect, useState } from 'react'
+import { getApiBase } from '@/utils/apiConfig'
 
 export default function VerifyEmailPage() {
   const params = new URLSearchParams(window.location.search)
@@ -17,8 +18,9 @@ export default function VerifyEmailPage() {
     if (!token || incomingStatus) return
     ;(async () => {
       try {
+        const API_BASE = getApiBase();
         const res = await fetch(
-          `http://127.0.0.1:8080/auth/verify?token=${encodeURIComponent(token)}`,
+          `${API_BASE}/auth/verify?token=${encodeURIComponent(token)}`,
           {
             method: 'GET',
             redirect: 'follow',

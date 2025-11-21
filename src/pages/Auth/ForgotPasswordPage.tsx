@@ -7,6 +7,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
+import { getApiBase } from "@/utils/apiConfig";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -23,7 +24,8 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:8080/auth/forgot-password", {
+      const API_BASE = getApiBase();
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

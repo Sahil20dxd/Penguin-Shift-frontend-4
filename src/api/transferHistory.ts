@@ -7,11 +7,9 @@ import type {
   TransferHistoryTrackResponse,
 } from '@/types/transferHistory';
 
-const API_BASE =
-  (typeof import.meta !== 'undefined' &&
-    (import.meta as any).env?.VITE_API_BASE) ||
-  (process.env as any)?.REACT_APP_API_URL ||
-  'http://127.0.0.1:8080';
+import { getApiBase } from '@/utils/apiConfig'
+
+const API_BASE = getApiBase()
 
 function getAuthToken(): string {
   return localStorage.getItem('authToken') || localStorage.getItem('jwt') || '';

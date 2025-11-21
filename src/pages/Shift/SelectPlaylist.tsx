@@ -33,6 +33,7 @@ import {
   getLinkUrl,
   fetchPlaylists,
 } from "@/components/shift/apiClient";
+import { getApiBase } from "@/utils/apiConfig";
 
 // platform union
 type Platform = "spotify" | "youtube";
@@ -269,10 +270,9 @@ export default function SelectPlaylist() {
       setIsLinked(false);
       setPlaylists([]);
 
+      const API_BASE = getApiBase();
       const res = await fetch(
-        `${
-          (import.meta as any)?.env?.VITE_API_BASE || "http://127.0.0.1:8080"
-        }/api/platforms/force-reconnect/${localPlatform}`,
+        `${API_BASE}/api/platforms/force-reconnect/${localPlatform}`,
         {
           method: "POST",
           headers: {

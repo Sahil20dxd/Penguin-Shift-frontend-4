@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/useToast";
+import { getApiBase } from "@/utils/apiConfig";
 
 export default function ResendVerificationPage() {
   const params = new URLSearchParams(window.location.search);
@@ -43,7 +44,8 @@ export default function ResendVerificationPage() {
     setMessage("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8080/auth/resend", {
+      const API_BASE = getApiBase();
+      const response = await fetch(`${API_BASE}/auth/resend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -14,9 +14,9 @@ import {
   getTurnstileToken,
   resetTurnstile,
 } from "@/utils/security/turnstile";
+import { getApiBase } from "@/utils/apiConfig";
 
-const API_BASE =
-  (import.meta as any)?.env?.VITE_API_BASE || "http://127.0.0.1:8080";
+const API_BASE = getApiBase();
 const TURNSTILE_SITE_KEY =
   (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "";
 
