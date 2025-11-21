@@ -15,23 +15,8 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
-            return 'react-vendor';
-          }
-          if (id.includes('node_modules/framer-motion')) {
-            return 'framer-motion';
-          }
-          if (id.includes('node_modules/@radix-ui')) {
-            return 'radix-ui';
-          }
-          if (id.includes('node_modules/lucide-react')) {
-            return 'lucide-icons';
-          }
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-        },
+        // Let Vite handle automatic chunk splitting to avoid loading order issues
+        // This ensures proper dependency resolution and chunk loading order
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
