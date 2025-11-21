@@ -33,16 +33,23 @@ export default function LoginPage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      if (!TURNSTILE_SITE_KEY) return;
+      if (!TURNSTILE_SITE_KEY) {
+        console.warn('Turnstile site key not configured. CAPTCHA will be disabled.');
+        return;
+      }
       try {
         await loadTurnstile();
         if (!active) return;
         await renderTurnstile("captcha-login", TURNSTILE_SITE_KEY);
-      } catch {
-        showToast(
-          "We couldn’t load the verification widget. Please refresh the page.",
-          "error"
-        );
+      } catch (err) {
+        console.error('Failed to load Turnstile:', err);
+        // Only show error if site key is configured (otherwise it's expected)
+        if (TURNSTILE_SITE_KEY) {
+          showToast(
+            "We couldn't load the verification widget. Please refresh the page or try again later.",
+            "error"
+          );
+        }
       }
     })();
     return () => {

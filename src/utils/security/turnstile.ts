@@ -26,10 +26,18 @@ export function loadTurnstile(): Promise<void> {
 if (window.turnstile) return Promise.resolve()
 
 if (scriptLoaded) {
-return new Promise((resolve) => {
+return new Promise((resolve, reject) => {
+let attempts = 0
+const maxAttempts = 100 // 5 seconds max wait (100 * 50ms)
 const wait = (): void => {
-if (window.turnstile) resolve()
-else window.setTimeout(wait, 50)
+if (window.turnstile) {
+resolve()
+} else if (attempts >= maxAttempts) {
+reject(new Error('Turnstile script loaded but API not available'))
+} else {
+attempts++
+window.setTimeout(wait, 50)
+}
 }
 wait()
 })
@@ -37,12 +45,23 @@ wait()
 
 scriptLoaded = true
 return new Promise((resolve, reject) => {
-window[CALLBACK_NAME] = () => resolve()
+// Set timeout for script loading (10 seconds)
+const timeout = window.setTimeout(() => {
+reject(new Error('Turnstile script loading timeout'))
+}, 10000)
+
+window[CALLBACK_NAME] = () => {
+clearTimeout(timeout)
+resolve()
+}
 const s = document.createElement('script')
 s.src = SRC + '?render=explicit&onload=' + CALLBACK_NAME
 s.async = true
 s.defer = true
-s.onerror = () => reject(new Error('Failed to load Turnstile'))
+s.onerror = () => {
+clearTimeout(timeout)
+reject(new Error('Failed to load Turnstile script from Cloudflare'))
+}
 document.body.appendChild(s)
 })
 }

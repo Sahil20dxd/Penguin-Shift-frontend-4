@@ -15,7 +15,6 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        // Let Vite handle automatic chunk splitting to avoid loading order issues
         // This ensures proper dependency resolution and chunk loading order
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
