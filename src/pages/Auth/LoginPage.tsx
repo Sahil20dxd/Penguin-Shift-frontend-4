@@ -37,10 +37,18 @@ export default function LoginPage() {
         console.warn('Turnstile site key not configured. CAPTCHA will be disabled.');
         return;
       }
+      
+      // Small delay to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!active) return;
+      
       try {
-        await loadTurnstile();
-        if (!active) return;
-        await renderTurnstile("captcha-login", TURNSTILE_SITE_KEY);
+        await renderTurnstile("captcha-login", (token) => {
+          console.log('Turnstile token received');
+        }, () => {
+          console.log('Turnstile token expired');
+        });
       } catch (err) {
         console.error('Failed to load Turnstile:', err);
         // Only show error if site key is configured (otherwise it's expected)
@@ -56,7 +64,7 @@ export default function LoginPage() {
       active = false;
       resetTurnstile();
     };
-  }, [showToast]);
+  }, [showToast, TURNSTILE_SITE_KEY]);
 
   // Handle OAuth redirect messages
   useEffect(() => {
