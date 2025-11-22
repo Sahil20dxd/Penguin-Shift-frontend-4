@@ -25,6 +25,15 @@ export default function AuthRouter() {
 
   useEffect(() => {
     const status = new URLSearchParams(location.search).get("status");
+    const reason = params.get("reason");
+
+    // Handle OAuth failure redirects from backend
+    // Backend redirects to: /auth?mode=register&reason=user-not-found
+    if (mode === "register" && reason === "user-not-found") {
+      // Stay on register page - the mode is already set correctly
+      // This happens when user tries to login with Google but account doesn't exist
+      return;
+    }
 
     // Helper to refresh session from cookies and land on profile
     const finishAndGoProfile = async () => {
@@ -59,7 +68,7 @@ export default function AuthRouter() {
       // After confirming the link, server updated the email — refetch /me
       finishAndGoProfile();
     }
-  }, [mode, location.search, login, navigate]);
+  }, [mode, location.search, login, navigate, params]);
 
   if (loading) return null;
 

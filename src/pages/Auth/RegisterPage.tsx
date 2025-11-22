@@ -5,11 +5,12 @@
 // and handles friendly user feedback.
 // --------------------------------------------------------------------
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
+import { useAuth } from '@/context/useAuth'
 import {
   loadTurnstile,
   renderTurnstile,
@@ -28,6 +29,9 @@ const hasMinLen = (v: string, n: number) => v.trim().length >= n
 
 export default function RegisterPage() {
   const { showToast, Toast } = useToast()
+  const { login } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   // form state
   const [username, setUsername] = useState('')
@@ -51,6 +55,19 @@ export default function RegisterPage() {
     color: string
     score: number
   }>({ label: '', color: 'gray', score: 0 })
+
+  // Handle OAuth redirect with user-not-found reason
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const reason = params.get('reason')
+    
+    if (reason === 'user-not-found') {
+      showToast(
+        'No account found with that Google email. Please complete registration below.',
+        'info'
+      )
+    }
+  }, [location.search, showToast])
 
   // render Turnstile on mount - only run once on mount
   useEffect(() => {
@@ -176,12 +193,56 @@ export default function RegisterPage() {
       } catch {}
 
       if (res.ok) {
+        // Try to log in the user immediately after registration
+        try {
+          const loginRes = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              identifier: email.trim(),
+              password,
+              remember: true,
+            }),
+          })
+
+          if (loginRes.ok) {
+            const loginData = await loginRes.json().catch(() => ({}))
+            const generatedUsername =
+              loginData?.username ||
+              username.trim().toLowerCase().replace(/\s+/g, '') ||
+              'user' + Math.floor(Math.random() * 1000)
+
+            // Log in the user using the auth context
+            login(
+              {
+                name: loginData?.username || username.trim(),
+                email: loginData?.email || email.trim(),
+                username: generatedUsername,
+              },
+              loginData?.accessToken
+            )
+
+            showToast(
+              'Account created successfully! Redirecting to your account settings...',
+              'success'
+            )
+            resetTurnstile()
+            // Redirect to profile (Account Settings)
+            navigate('/profile', { replace: true })
+            return
+          }
+        } catch (loginErr) {
+          console.error('Auto-login after registration failed:', loginErr)
+        }
+
+        // Fallback: if auto-login fails, go to verify email
         showToast(
           'Account created successfully! Please check your inbox to verify your email.',
           'success'
         )
         resetTurnstile()
-        window.location.href = '/verify-email?status=pending&email=' + encodeURIComponent(email)
+        navigate('/verify-email?status=pending&email=' + encodeURIComponent(email), { replace: true })
         return
       }
 
@@ -377,9 +438,9 @@ export default function RegisterPage() {
         <Button
           type='button'
           onClick={() => {
-            document.cookie =
-              'PS_OAUTH_INTENT=register; Path=/; Max-Age=300; SameSite=Lax'
-            window.location.href = `${API_BASE}/oauth2/authorization/google`
+            // Use state parameter instead of cookies (works cross-domain on Railway)
+            const state = "register:" + Math.random().toString(36).substring(2, 15);
+            window.location.href = `${API_BASE}/oauth2/authorization/google?state=${encodeURIComponent(state)}`
           }}
           className='mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-2 rounded-md hover:bg-gray-50'
         >
