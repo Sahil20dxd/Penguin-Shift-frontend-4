@@ -52,7 +52,7 @@ export default function RegisterPage() {
     score: number
   }>({ label: '', color: 'gray', score: 0 })
 
-  // render Turnstile on mount
+  // render Turnstile on mount - only run once on mount
   useEffect(() => {
     let active = true
     ;(async () => {
@@ -85,9 +85,10 @@ export default function RegisterPage() {
     })()
     return () => {
       active = false
-      resetTurnstile()
+      resetTurnstile('captcha-register')
     }
-  }, [showToast, TURNSTILE_SITE_KEY])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array - only run once on mount
 
   // password strength evaluation
   function evaluatePasswordStrength(pw: string) {

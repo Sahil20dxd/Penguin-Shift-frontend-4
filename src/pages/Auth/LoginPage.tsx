@@ -29,7 +29,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Mount Turnstile
+  // Mount Turnstile - only run once on mount
   useEffect(() => {
     let active = true;
     (async () => {
@@ -62,9 +62,10 @@ export default function LoginPage() {
     })();
     return () => {
       active = false;
-      resetTurnstile();
+      resetTurnstile("captcha-login");
     };
-  }, [showToast, TURNSTILE_SITE_KEY]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   // Handle OAuth redirect messages
   useEffect(() => {

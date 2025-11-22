@@ -110,6 +110,9 @@ function waitForElement(containerId: string, timeout = 5000): Promise<HTMLElemen
   })
 }
 
+// Track which containers have widgets to prevent duplicates
+const renderedContainers = new Set<string>()
+
 /** Render Turnstile into containerId and keep token fresh. */
 export async function renderTurnstile(
   containerId: string,
@@ -120,6 +123,12 @@ export async function renderTurnstile(
     const error = 'VITE_TURNSTILE_SITE_KEY is missing. Please set it in your environment variables.'
     debugLog('Error:', error)
     throw new Error(error)
+  }
+  
+  // Check if widget already exists in this container
+  if (renderedContainers.has(containerId)) {
+    debugLog('Widget already rendered in container:', containerId, '- skipping')
+    return
   }
   
   debugLog('Rendering Turnstile widget in container:', containerId, 'with site key:', SITE_KEY.substring(0, 8) + '...')
@@ -136,7 +145,7 @@ export async function renderTurnstile(
     throw new Error(error)
   }
 
-  // Reset existing widget if any
+  // Reset existing widget if any (for different containers)
   if (widgetId) {
     try { 
       debugLog('Resetting existing widget:', widgetId)
@@ -153,6 +162,13 @@ export async function renderTurnstile(
     const error = `Container element #${containerId} not found`
     debugLog('Error:', error)
     throw new Error(error)
+  }
+
+  // Check if container already has a Turnstile widget (prevent duplicates)
+  if (container.querySelector('.cf-turnstile')) {
+    debugLog('Container already has a Turnstile widget - skipping render')
+    renderedContainers.add(containerId)
+    return
   }
 
   debugLog('Rendering widget...')
@@ -175,6 +191,7 @@ export async function renderTurnstile(
         lastToken = null
       }
     })
+    renderedContainers.add(containerId)
     debugLog('Widget rendered successfully with ID:', widgetId)
   } catch (err) {
     debugLog('Error rendering widget:', err)
@@ -188,9 +205,12 @@ return lastToken
 }
 
 /** Reset widget and clear token. */
-export function resetTurnstile(): void {
+export function resetTurnstile(containerId?: string): void {
 if (widgetId && window.turnstile) {
 try { window.turnstile.reset(widgetId) } catch {}
+}
+if (containerId) {
+renderedContainers.delete(containerId)
 }
 lastToken = null
 }
