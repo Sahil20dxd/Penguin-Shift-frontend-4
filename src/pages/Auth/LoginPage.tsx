@@ -271,9 +271,9 @@ export default function LoginPage() {
         <Button
           type="button"
           onClick={() => {
-            // Use state parameter instead of cookies (works cross-domain on Railway)
-            const state = "login:" + Math.random().toString(36).substring(2, 15);
-            window.location.assign(`${API_BASE}/oauth2/authorization/google?state=${encodeURIComponent(state)}`);
+            document.cookie =
+              "PS_OAUTH_INTENT=login; Path=/; Max-Age=300; SameSite=Lax";
+            window.location.assign(`${API_BASE}/oauth2/authorization/google`);
           }}
           className="mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-2 rounded-md hover:bg-gray-50"
         >

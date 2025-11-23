@@ -1,12 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import * as path from 'path'
+// @ts-ignore - Node.js types may not be available in IDE but work at runtime
+import { fileURLToPath as _fileURLToPath } from 'node:url'
+// @ts-ignore
+import { dirname as _dirname, resolve } from 'node:path'
+
+const __filename = _fileURLToPath(import.meta.url)
+const __dirname = _dirname(__filename)
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: '127.0.0.1',
+    port: 5173,
+  },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': resolve(__dirname, './src'),
     },
   },
   build: {

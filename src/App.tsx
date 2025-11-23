@@ -1,13 +1,12 @@
 // src/App.tsx
-import React, { Suspense, lazy, useEffect } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import React, { Suspense, lazy } from "react";
+import { Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useToast } from "@/hooks/useToast";
 import * as RadixToast from "@radix-ui/react-toast";
 import { ShiftProvider } from "@/components/shift/ShiftContext";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/context/useAuth";
 
 // Lazy load all pages for code splitting
 const Landing = lazy(() => import("./pages/LandingPage/LandingPage"));
@@ -33,37 +32,6 @@ const PageLoader = () => (
   </div>
 );
 
-// Component to handle initial auth check and redirect to registration
-// This implements the flow: app starts → check for user → if not found → redirect to registration
-function AuthRedirectHandler() {
-  const { isAuthenticated, loading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    // Only redirect if auth check is complete and user is not authenticated
-    // Don't redirect if already on auth/register/login pages, verify-email, or landing page
-    if (!loading && !isAuthenticated) {
-      const path = location.pathname;
-      const isPublicPage = path.startsWith('/auth') || 
-                           path.startsWith('/login') || 
-                           path.startsWith('/verify-email') ||
-                           path.startsWith('/reset-password') ||
-                           path === '/' ||
-                           path === '/explore' ||
-                           path === '/contact';
-      
-      // If trying to access a protected route (not a public page), redirect to registration
-      // This ensures users are guided to registration when they try to access features
-      if (!isPublicPage) {
-        navigate('/auth?mode=register', { replace: true });
-      }
-    }
-  }, [loading, isAuthenticated, navigate, location.pathname]);
-
-  return null;
-}
-
 export default function App() {
   // Mount the UI component once
   const { Toast: ToastUI } = useToast();
@@ -71,7 +39,6 @@ export default function App() {
   return (
     <RadixToast.Provider swipeDirection="right" duration={3500}>
       <ShiftProvider>
-        <AuthRedirectHandler />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route
@@ -205,7 +172,6 @@ export default function App() {
           </Routes>
         </Suspense>
       </ShiftProvider>
-      {/* Render the element (NOT <ToastUI />) */}
       {/* Render the element (NOT <ToastUI />) */}
       {ToastUI}
 

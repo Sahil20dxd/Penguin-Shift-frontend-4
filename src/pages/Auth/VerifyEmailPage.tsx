@@ -71,13 +71,13 @@ export default function VerifyEmailPage() {
               Email verified successfully
             </h1>
             <p className='text-gray-600 mb-6'>
-              Your email address has been verified. Redirecting to your account settings...
+              Your email address has been verified. You can now log in to your account.
             </p>
             <a
-              href='/profile'
+              href='/auth?mode=login'
               className='px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
             >
-              Go to Account Settings
+              Go to Login
             </a>
           </>
         ) : (
