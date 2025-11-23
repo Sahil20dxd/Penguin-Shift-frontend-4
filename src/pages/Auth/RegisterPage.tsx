@@ -44,6 +44,9 @@ export default function RegisterPage() {
   const [emailErr, setEmailErr] = useState<string | null>(null)
   const [passwordErr, setPasswordErr] = useState<string | null>(null)
   const [confirmErr, setConfirmErr] = useState<string | null>(null)
+  
+  // content moderation errors
+  const [usernameModerationError, setUsernameModerationError] = useState<string | null>(null)
 
   // password strength
   const [passwordStrength, setPasswordStrength] = useState<{
@@ -129,6 +132,11 @@ export default function RegisterPage() {
     if (!hasMinLen(username, 3)) {
       setUsernameErr('Username must be at least 3 characters.')
       showToast('Please enter a longer username (min 3 characters).', 'warning')
+      return
+    }
+    // Check for content moderation errors
+    if (usernameModerationError) {
+      showToast('Please change your username as it contains inappropriate content.', 'warning')
       return
     }
     if (!isValidEmail(email)) {
@@ -252,11 +260,24 @@ export default function RegisterPage() {
               ? setUsernameErr('Username must be at least 3 characters.')
               : setUsernameErr(null)
           }
+          onValidationError={(error) => setUsernameModerationError(error)}
           placeholder='e.g. David46'
-          className={`mb-1 ${usernameErr ? 'border-red-300 focus:ring-red-200' : ''}`}
+          className={`mb-1 ${
+            usernameErr || usernameModerationError
+              ? 'border-red-500 focus:ring-red-200'
+              : username.trim() && !usernameErr && !usernameModerationError
+              ? 'border-green-500'
+              : ''
+          }`}
         />
-        {usernameErr && (
+        {usernameModerationError && (
+          <p className='text-xs text-red-600 mb-3'>{usernameModerationError}</p>
+        )}
+        {usernameErr && !usernameModerationError && (
           <p className='text-xs text-red-600 mb-3'>{usernameErr}</p>
+        )}
+        {username.trim() && !usernameErr && !usernameModerationError && hasMinLen(username, 3) && (
+          <p className='text-xs text-green-600 mb-3'>✓ Username is available</p>
         )}
 
         {/* Email */}
@@ -377,9 +398,11 @@ export default function RegisterPage() {
         <Button
           type='button'
           onClick={() => {
+            // Set cookie for same-domain (local dev)
             document.cookie =
               'PS_OAUTH_INTENT=register; Path=/; Max-Age=300; SameSite=Lax'
-            window.location.href = `${API_BASE}/oauth2/authorization/google`
+            // Pass intent via query parameter for cross-domain (Railway)
+            window.location.href = `${API_BASE}/oauth2/authorization/google?intent=register`
           }}
           className='mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-2 rounded-md hover:bg-gray-50'
         >

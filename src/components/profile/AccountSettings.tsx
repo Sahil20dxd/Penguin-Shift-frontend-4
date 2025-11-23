@@ -52,6 +52,7 @@ export default function AccountSettings() {
   const [username, setUsername] = useState(user?.username ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
+  const [usernameModerationError, setUsernameModerationError] = useState<string | null>(null)
   const [savingUsername, setSavingUsername] = useState(false)
   const [savingEmail, setSavingEmail] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -131,6 +132,11 @@ export default function AccountSettings() {
     }
     if (trimmed.length < 3) {
       showToast('Username must be at least 3 characters long.', 'warning')
+      return
+    }
+    // Check for content moderation errors
+    if (usernameModerationError) {
+      showToast('Please change your username as it contains inappropriate content.', 'warning')
       return
     }
     if (usernameAvailable === false) {
@@ -294,8 +300,17 @@ export default function AccountSettings() {
                   aria-label='Username'
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  onValidationError={(error) => setUsernameModerationError(error)}
                   disabled={!editingUsername}
-                  className={`w-full ${editingUsername ? '' : 'bg-gray-50'}`}
+                  className={`w-full ${
+                    editingUsername && usernameModerationError
+                      ? 'border-red-500 focus:ring-red-200'
+                      : editingUsername && username.trim() && !usernameModerationError && username.trim() !== originalUsername && usernameAvailable === true
+                      ? 'border-green-500'
+                      : editingUsername
+                      ? ''
+                      : 'bg-gray-50'
+                  }`}
                 />
                 {editingUsername ? (
                   <Button
@@ -304,6 +319,7 @@ export default function AccountSettings() {
                     variant='outline'
                     onClick={() => {
                       setUsername(originalUsername)
+                      setUsernameModerationError(null)
                       setEditingUsername(false)
                     }}
                     aria-label='Cancel username edit'
@@ -325,12 +341,24 @@ export default function AccountSettings() {
                 {editingUsername &&
                   username.trim() !== originalUsername &&
                   username.trim().length >= 3 &&
+                  !usernameModerationError &&
                   (usernameAvailable === true ? (
                     <Check className='text-green-500 w-5 h-5' />
                   ) : usernameAvailable === false ? (
                     <X className='text-red-500 w-5 h-5' />
                   ) : null)}
               </div>
+              {editingUsername && usernameModerationError && (
+                <p className='text-xs text-red-600'>{usernameModerationError}</p>
+              )}
+              {editingUsername &&
+                username.trim() &&
+                !usernameModerationError &&
+                username.trim() !== originalUsername &&
+                username.trim().length >= 3 &&
+                usernameAvailable === true && (
+                  <p className='text-xs text-green-600'>✓ Username is available</p>
+                )}
             </div>
 
             {/* Email */}

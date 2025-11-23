@@ -11,71 +11,65 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, enableModeration = true, onValidationError, onChange, onPaste, value, ...props }, ref) => {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const lastValidValue = React.useRef<string>(typeof value === 'string' ? value : (props.defaultValue as string) || '');
+    const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     // Combine refs
     React.useImperativeHandle(ref, () => textareaRef.current as HTMLTextAreaElement);
 
+    // Cleanup debounce timer on unmount
+    React.useEffect(() => {
+      return () => {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+      };
+    }, []);
+
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = e.target.value;
       
-      // Apply content moderation if enabled
-      if (enableModeration) {
-        const error = validateTextInput(newValue);
-        if (onValidationError) {
-          onValidationError(error);
-        }
-        // If validation fails, revert to last valid value
-        if (error) {
-          // Use setTimeout to ensure DOM is updated
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.value = lastValidValue.current;
-              // Trigger input event to sync React state if uncontrolled
-              const syntheticEvent = new Event('input', { bubbles: true });
-              textareaRef.current.dispatchEvent(syntheticEvent);
-            }
-          }, 0);
-          // Create a synthetic event with the old value for controlled components
-          const syntheticEvent = {
-            ...e,
-            target: { ...e.target, value: lastValidValue.current },
-            currentTarget: { ...e.currentTarget, value: lastValidValue.current }
-          } as React.ChangeEvent<HTMLTextAreaElement>;
-          if (onChange) {
-            onChange(syntheticEvent);
-          }
-          return;
-        }
-        // Update last valid value
-        lastValidValue.current = newValue;
-      } else {
-        lastValidValue.current = newValue;
-      }
+      // Always allow typing - update value immediately
+      lastValidValue.current = newValue;
       
-      // Call original onChange
+      // Call original onChange immediately for responsive UI
       if (onChange) {
         onChange(e);
+      }
+      
+      // Apply content moderation if enabled
+      if (enableModeration) {
+        // Clear previous debounce timer
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+
+        // Debounce validation - wait 500ms after user stops typing
+        debounceTimerRef.current = setTimeout(() => {
+          const error = validateTextInput(newValue);
+          if (onValidationError) {
+            onValidationError(error);
+          }
+        }, 500);
       }
     };
 
     const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const pastedText = e.clipboardData.getData('text');
       
-      // Validate pasted content
+      // Allow paste - validate after paste completes
+      // Call original onPaste first
+      if (onPaste) {
+        onPaste(e);
+      }
+      
+      // Validate pasted content after a short delay (to allow paste to complete)
       if (enableModeration) {
-        const error = validateTextInput(pastedText);
-        if (error) {
-          e.preventDefault();
+        setTimeout(() => {
+          const error = validateTextInput(pastedText);
           if (onValidationError) {
             onValidationError(error);
           }
-          return;
-        }
-      }
-      
-      // Call original onPaste
-      if (onPaste) {
-        onPaste(e);
+        }, 100);
       }
     };
 
