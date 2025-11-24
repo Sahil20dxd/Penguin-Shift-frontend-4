@@ -6,18 +6,18 @@
 // Patterns check for complete words to avoid blocking partial words like "fucus" when typing "fuck"
 // Using word boundaries and minimum length requirements to prevent false positives
 const bannedPatterns = [
-  // Profanity patterns - word boundaries ensure we match complete words, not partial matches
-  // Minimum 4 characters required to avoid blocking while typing (e.g., "fu" won't match, but "fuck" will)
-  /\b(f+|ph+)[u@*]+(c+|ck+|q+){2,}\b/i,      // fuck variations (e.g., "fuck", "phuck", "f*ck")
-  /\ba+s{2,}\b/i,                            // ass variations (e.g., "ass", "aass")
-  /\bb+i+t+c+h+\b/i,                         // bitch variations (e.g., "bitch", "biitch")
-  /\bs+h+i+t+\b/i,                           // shit (e.g., "shit", "shiit")
-  /\b(d+|di+)+c+k+\b/i,                      // dick (e.g., "dick", "dickk")
-  /\b(p+|ph+)+u+s+s+y+\b/i,                  // pussy (e.g., "pussy", "phussy")
-  /\bc+u+n+t+\b/i,                           // cunt (e.g., "cunt", "cuunt")
-  /\bn+\W*g+\W*g+\W*/i,                      // **blocks ANY spelling of that slur**
-  /\bw+h+o+r+e+\b/i,                         // whore (e.g., "whore", "whoore")
-  /\bs+l+u+t+\b/i                            // slut (e.g., "slut", "sluut")
+  // Profanity patterns - match banned words even when embedded in other text (for username validation)
+  // Using word boundaries where appropriate to avoid false positives
+  /(f+|ph+)[u@*]+(c+|ck+|q+)+/i,             // fuck variations (e.g., "fuck", "phuck", "f*ck", "fucck", "testfuck", "fuck123")
+  /a+s{2,}/i,                                // ass variations (e.g., "ass", "aass", "testass")
+  /b+i+t+c+h+/i,                             // bitch variations (e.g., "bitch", "biitch", "testbitch")
+  /s+h+i+t+/i,                               // shit (e.g., "shit", "shiit", "testshit")
+  /(d+|di+)+c+k+/i,                          // dick (e.g., "dick", "dickk", "testdick")
+  /(p+|ph+)+u+s+s+y+/i,                      // pussy (e.g., "pussy", "phussy", "testpussy")
+  /c+u+n+t+/i,                               // cunt (e.g., "cunt", "cuunt", "testcunt")
+  /n+\W*g+\W*g+\W*/i,                        // **blocks ANY spelling of that slur**
+  /w+h+o+r+e+/i,                             // whore (e.g., "whore", "whoore", "testwhore")
+  /s+l+u+t+/i                                // slut (e.g., "slut", "sluut", "testslut")
 ];
 
 // Cache for validation results (LRU-style, prevents re-validation of same strings)

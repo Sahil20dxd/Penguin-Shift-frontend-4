@@ -59,6 +59,10 @@ export default function PublicPlaylistSelectDestination() {
   const [nameAvailable, setNameAvailable] = useState<boolean | null>(null)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Content moderation errors
+  const [playlistNameModerationError, setPlaylistNameModerationError] = useState<string | null>(null)
+  const [playlistDescModerationError, setPlaylistDescModerationError] = useState<string | null>(null)
+  const [publicPlaylistNameModerationError, setPublicPlaylistNameModerationError] = useState<string | null>(null)
 
   // Check public playlist name availability with debouncing
   useEffect(() => {
@@ -108,14 +112,46 @@ export default function PublicPlaylistSelectDestination() {
       return
     }
 
+    // Immediate content moderation validation
+    const { validateTextInput } = await import('@/utils/contentModeration')
+    
+    const playlistNameError = validateTextInput(playlistName.trim())
+    if (playlistNameError) {
+      setPlaylistNameModerationError(playlistNameError)
+      setError('Please fix the playlist name - it contains inappropriate content.')
+      return
+    }
+    
+    const playlistDescError = playlistDesc.trim() ? validateTextInput(playlistDesc.trim()) : null
+    if (playlistDescError) {
+      setPlaylistDescModerationError(playlistDescError)
+      setError('Please fix the playlist description - it contains inappropriate content.')
+      return
+    }
+    
+    if (makePublic) {
+      const publicNameError = validateTextInput(publicPlaylistName.trim())
+      if (publicNameError) {
+        setPublicPlaylistNameModerationError(publicNameError)
+        setError('Please fix the public playlist name - it contains inappropriate content.')
+        return
+      }
+    }
+    
+    // Check for any moderation errors from debounced validation
+    if (playlistNameModerationError || playlistDescModerationError || publicPlaylistNameModerationError) {
+      setError('Please fix the content - it contains inappropriate words.')
+      return
+    }
+
+    if (!playlist.transferId) {
+      setError('This playlist cannot be transferred. Transfer information is missing.')
+      return
+    }
+
     setCreating(true)
     setError(null)
     try {
-      if (!playlist.transferId) {
-        setError('This playlist cannot be transferred. Transfer information is missing.')
-        return
-      }
-
       const payload = {
         sourcePlatform,
         destinationPlatform,
@@ -203,18 +239,27 @@ export default function PublicPlaylistSelectDestination() {
               <Input
                 value={playlistName}
                 onChange={(e) => setPlaylistName(e.target.value)}
+                onValidationError={(error) => setPlaylistNameModerationError(error)}
                 placeholder='My Transferred Playlist'
+                className={playlistNameModerationError ? 'border-red-500 focus:ring-red-200' : ''}
               />
+              {playlistNameModerationError && (
+                <p className='text-xs text-red-600 mt-1'>{playlistNameModerationError}</p>
+              )}
             </div>
             <div>
               <div className='text-sm mb-1'>Description (optional)</div>
               <Textarea
-                className='w-full border rounded-md px-3 py-2'
+                className={`w-full border rounded-md px-3 py-2 ${playlistDescModerationError ? 'border-red-500 focus:ring-red-200' : ''}`}
                 rows={4}
                 value={playlistDesc}
                 onChange={(e) => setPlaylistDesc(e.target.value)}
+                onValidationError={(error) => setPlaylistDescModerationError(error)}
                 placeholder='Describe your playlist…'
               />
+              {playlistDescModerationError && (
+                <p className='text-xs text-red-600 mt-1'>{playlistDescModerationError}</p>
+              )}
             </div>
           </div>
 
@@ -276,9 +321,12 @@ export default function PublicPlaylistSelectDestination() {
                   <Input
                     value={publicPlaylistName}
                     onChange={(e) => setPublicPlaylistName(e.target.value)}
+                    onValidationError={(error) => setPublicPlaylistNameModerationError(error)}
                     placeholder='Enter public playlist name'
                     className={
-                      publicPlaylistName.trim() && nameAvailable === false
+                      publicPlaylistNameModerationError
+                        ? 'border-red-500 pr-10 focus:ring-red-200'
+                        : publicPlaylistName.trim() && nameAvailable === false
                         ? 'border-red-500 pr-10'
                         : publicPlaylistName.trim() && nameAvailable === true
                         ? 'border-green-500 pr-10'
@@ -297,12 +345,15 @@ export default function PublicPlaylistSelectDestination() {
                     )}
                   </div>
                 </div>
-                {publicPlaylistName.trim() && nameAvailable === false && (
+                {publicPlaylistNameModerationError && (
+                  <p className='text-xs text-red-600'>{publicPlaylistNameModerationError}</p>
+                )}
+                {publicPlaylistName.trim() && !publicPlaylistNameModerationError && nameAvailable === false && (
                   <p className='text-xs text-red-600'>
                     This playlist name is already taken. Please choose another name.
                   </p>
                 )}
-                {publicPlaylistName.trim() && nameAvailable === true && (
+                {publicPlaylistName.trim() && !publicPlaylistNameModerationError && nameAvailable === true && (
                   <p className='text-xs text-green-600'>
                     ✓ This playlist name is available
                   </p>

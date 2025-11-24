@@ -134,7 +134,15 @@ export default function RegisterPage() {
       showToast('Please enter a longer username (min 3 characters).', 'warning')
       return
     }
-    // Check for content moderation errors
+    // Immediate content moderation check (in case debounced validation hasn't run yet)
+    const { validateTextInput } = await import('@/utils/contentModeration')
+    const immediateModerationError = validateTextInput(username.trim())
+    if (immediateModerationError) {
+      setUsernameModerationError(immediateModerationError)
+      showToast('Please change your username as it contains inappropriate content.', 'warning')
+      return
+    }
+    // Check for content moderation errors from debounced validation
     if (usernameModerationError) {
       showToast('Please change your username as it contains inappropriate content.', 'warning')
       return
