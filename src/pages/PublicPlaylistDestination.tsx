@@ -322,7 +322,17 @@ export default function PublicPlaylistDestination() {
       }
 
       pollRef.current = window.setInterval(async () => {
-        if (popup.closed) {
+        // Check if popup is closed (wrapped in try-catch to handle COOP errors)
+        let isPopupClosed = false;
+        try {
+          isPopupClosed = popup.closed;
+        } catch (e) {
+          // Cross-Origin-Opener-Policy may block popup.closed check
+          // In this case, we'll rely on link status polling instead
+          isPopupClosed = false;
+        }
+        
+        if (isPopupClosed) {
           if (pollRef.current) window.clearInterval(pollRef.current)
           pollRef.current = null
 
@@ -381,7 +391,17 @@ export default function PublicPlaylistDestination() {
           window.clearInterval(pollRef.current)
           pollRef.current = null
         }
-        if (!popup.closed) {
+        // Check if popup is still open (wrapped in try-catch to handle COOP errors)
+        let isPopupOpen = true;
+        try {
+          isPopupOpen = !popup.closed;
+        } catch (e) {
+          // Cross-Origin-Opener-Policy may block popup.closed check
+          // Assume popup is still open and try to close it
+          isPopupOpen = true;
+        }
+        
+        if (isPopupOpen) {
           try {
             popup.close()
           } catch {}

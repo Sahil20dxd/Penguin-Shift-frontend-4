@@ -140,11 +140,8 @@ export default function TransferResults() {
           console.log('[TransferResults] ❌ Auth error - stopping polling');
           shouldStopPollingRef.current = true; // Set ref
 
-          // clear any stale tokens
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("jwt");
-          sessionStorage.removeItem("authToken");
-          sessionStorage.removeItem("jwt");
+          // Note: Tokens are now stored in HTTP-only cookies (not accessible to JS)
+          // Backend will handle token cleanup on logout/expiry
 
           setError(
             "Your connection has expired. Please reconnect your account."

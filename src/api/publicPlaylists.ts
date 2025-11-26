@@ -49,14 +49,69 @@ function normalizePublicPlaylist(playlist: any): PublicPlaylist {
   }
 }
 
-export async function getExplorePublicPlaylists(): Promise<PublicPlaylist[]> {
+export type PaginatedPlaylistsResponse = {
+  playlists: PublicPlaylist[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+export type GetExplorePublicPlaylistsOptions = {
+  page?: number
+  limit?: number
+  search?: string
+  platform?: string
+  genre?: string
+  minTracks?: number
+  maxTracks?: number
+  createdFrom?: string
+  sort?: 'recent' | 'tracks' | 'a-z'
+}
+
+/**
+ * Get public playlists with optional pagination and filtering.
+ * If no options provided, returns all playlists (backward compatible).
+ */
+export async function getExplorePublicPlaylists(
+  options?: GetExplorePublicPlaylistsOptions
+): Promise<PublicPlaylist[] | PaginatedPlaylistsResponse> {
   try {
-    const data = await apiJsonPublic('/api/public-playlists')
-    if (!Array.isArray(data)) {
-      console.warn('[getExplorePublicPlaylists] Expected array, got:', typeof data)
+    // Build query string
+    const params = new URLSearchParams()
+    if (options) {
+      if (options.page) params.append('page', String(options.page))
+      if (options.limit) params.append('limit', String(options.limit))
+      if (options.search) params.append('search', options.search)
+      if (options.platform) params.append('platform', options.platform)
+      if (options.genre) params.append('genre', options.genre)
+      if (options.minTracks) params.append('minTracks', String(options.minTracks))
+      if (options.maxTracks) params.append('maxTracks', String(options.maxTracks))
+      if (options.createdFrom) params.append('createdFrom', options.createdFrom)
+      if (options.sort) params.append('sort', options.sort)
+    }
+
+    const url = '/api/public-playlists' + (params.toString() ? '?' + params.toString() : '')
+    const data = await apiJsonPublic(url)
+
+    // Check if response is paginated (has total, page, etc.) or plain array (backward compatible)
+    if (data && typeof data === 'object' && 'playlists' in data && 'total' in data) {
+      // Paginated response
+      const paginated = data as any
+      return {
+        playlists: paginated.playlists.map(normalizePublicPlaylist),
+        total: paginated.total,
+        page: paginated.page,
+        limit: paginated.limit,
+        totalPages: paginated.totalPages
+      }
+    } else if (Array.isArray(data)) {
+      // Backward compatible: plain array response
+      return data.map(normalizePublicPlaylist)
+    } else {
+      console.warn('[getExplorePublicPlaylists] Unexpected response format:', typeof data)
       return []
     }
-    return data.map(normalizePublicPlaylist)
   } catch (err: any) {
     console.error('[getExplorePublicPlaylists] Error:', err)
     throw err
@@ -128,12 +183,16 @@ export async function reportPlaylist(
   playlistId: number,
   payload: ReportPlaylistPayload
 ): Promise<{ success: boolean; message: string; reportId: number }> {
+  // Add CSRF token for report request
+  const { addCsrfToken } = await import('@/utils/csrf')
+  const headers = addCsrfToken({
+    'Content-Type': 'application/json',
+  })
+  
   const response = await fetch(`${API_BASE}/api/public-playlists/${playlistId}/report`, {
     method: 'POST',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(payload),
   })
 

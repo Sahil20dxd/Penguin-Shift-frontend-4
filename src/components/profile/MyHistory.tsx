@@ -381,8 +381,8 @@ export default function MyHistory() {
           <SheetHeader className="border-b border-gray-200 pb-4 mb-4">
             <SheetTitle className="text-2xl font-bold text-gray-900">Transfer Details</SheetTitle>
             {selectedTransfer && (
-              <SheetDescription className="text-gray-700">
-                <div className="space-y-3 text-left mt-4">
+              <div className="text-gray-700 mt-4">
+                <div className="space-y-3 text-left">
                   {selectedTransfer.isPublic && (
                     <div className="flex items-center gap-2 p-3 bg-purple-100 border-2 border-purple-300 rounded-lg mb-3 shadow-sm">
                       <Globe className="w-5 h-5 text-purple-700" />
@@ -413,7 +413,7 @@ export default function MyHistory() {
                     </span>
                   </div>
                 </div>
-              </SheetDescription>
+              </div>
             )}
           </SheetHeader>
 

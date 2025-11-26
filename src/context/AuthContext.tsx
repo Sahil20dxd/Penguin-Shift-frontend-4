@@ -45,7 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const getToken = useCallback(() => token ?? localStorage.getItem("authToken"), [token]);
+  // Removed localStorage token access for security - rely on HTTP-only cookies only
+  const getToken = useCallback(() => token, [token]);
 
   const isAuthenticated = !!user;
 
@@ -58,41 +59,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (init.json !== undefined) headers.set("Content-Type", "application/json");
 
-      return fetch(input, {
+      // Determine if this is a state-changing operation
+      const method = (init.method || 'GET').toUpperCase();
+      const isStateChanging = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+
+      // Add CSRF token for state-changing operations
+      const { addCsrfToken } = await import("@/utils/csrf");
+      const csrfHeaders = addCsrfToken(Object.fromEntries(headers.entries()));
+      const finalHeaders = new Headers(csrfHeaders);
+
+      let res = await fetch(input, {
         ...init,
-        headers,
+        headers: finalHeaders,
         credentials: "include",
         body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
       });
+
+      // If we get 401 on a state-changing operation, it might be a CSRF token issue
+      // Make a GET request first to initialize the CSRF token, then retry the original request
+      if (!res.ok && res.status === 401 && isStateChanging) {
+        // First, make a GET request to initialize the CSRF token cookie
+        // Use a public endpoint that doesn't require authentication
+        const { getApiBase } = await import("@/utils/apiConfig");
+        const API_BASE = getApiBase();
+        try {
+          await fetch(`${API_BASE}/api/public-playlists?limit=1`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+        } catch {
+          // If GET fails, continue anyway - the original request might have set the cookie
+        }
+        
+        // Wait a moment to ensure the CSRF token cookie is set
+        await new Promise(resolve => setTimeout(resolve, 150));
+        
+        // Retry with fresh CSRF token (should be available now)
+        const retryCsrfHeaders = addCsrfToken(Object.fromEntries(headers.entries()));
+        const retryFinalHeaders = new Headers(retryCsrfHeaders);
+
+        res = await fetch(input, {
+          ...init,
+          headers: retryFinalHeaders,
+          credentials: "include",
+          body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
+        });
+      }
+
+      return res;
     },
     [getToken]
   );
 
   useEffect(() => {
+    // Load cached user data from localStorage (non-sensitive data only)
     const cached = localStorage.getItem("penguinshift_user");
-    if (cached) setUser(JSON.parse(cached));
-
-    const stored = localStorage.getItem("authToken");
-    if (stored && looksLikeJwt(stored)) {
-      setToken(stored);
-    } else if (stored) {
-      localStorage.removeItem("authToken");
+    if (cached) {
+      try {
+        setUser(JSON.parse(cached));
+      } catch {
+        // Invalid cache, clear it
+        localStorage.removeItem("penguinshift_user");
+      }
     }
 
-    const tryBearer =
-      stored && looksLikeJwt(stored)
-        ? fetch(`${API_BASE}/auth/me`, {
-            headers: { Authorization: `Bearer ${stored}` },
-            credentials: "include",
-          })
-        : Promise.resolve(null as unknown as Response);
-
-    const tryCookie = () => fetch(`${API_BASE}/auth/me`, { credentials: "include" });
-
+    // Authenticate using HTTP-only cookies only (secure)
+    // No localStorage token access - tokens are stored in HTTP-only cookies by backend
     (async () => {
       try {
-        let res = await tryBearer;
-        if (!res || !res.ok) res = await tryCookie();
+        const res = await fetch(`${API_BASE}/auth/me`, { 
+          credentials: "include" // Uses HTTP-only cookies
+        });
 
         if (res && res.ok) {
           const data = await res.json();
@@ -107,15 +144,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isRestricted: data.isRestricted || false,
           };
           setUser(u);
+          // Store user data in localStorage (non-sensitive, for UX only)
           localStorage.setItem("penguinshift_user", JSON.stringify(u));
+          // Note: Token is stored in HTTP-only cookie by backend, not accessible to JS
         } else {
-          localStorage.removeItem("authToken");
+          // Not authenticated - clear user data
           localStorage.removeItem("penguinshift_user");
           setUser(null);
           setToken(null);
         }
       } catch {
-        localStorage.removeItem("authToken");
+        // Network error or invalid response
         localStorage.removeItem("penguinshift_user");
         setUser(null);
         setToken(null);
@@ -133,23 +172,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const finalUser: User = { ...userData, username, role: userData.role || "USER" };
     setUser(finalUser);
+    // Store user data in localStorage (non-sensitive, for UX only)
     localStorage.setItem("penguinshift_user", JSON.stringify(finalUser));
 
+    // Note: Tokens are now stored in HTTP-only cookies by the backend
+    // We don't store tokens in localStorage for security (XSS protection)
+    // If a token is provided, we can use it temporarily, but it should be in a cookie
     if (incomingToken && looksLikeJwt(incomingToken)) {
-      setToken(incomingToken);
-      localStorage.setItem("authToken", incomingToken);
+      setToken(incomingToken); // Temporary in-memory only, not persisted
     } else {
-      localStorage.removeItem("authToken");
       setToken(null);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("penguinshift_user");
-    localStorage.removeItem("authToken");
-    fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
+    // Note: authToken is no longer stored in localStorage (security improvement)
+    // Backend will clear the HTTP-only cookie on logout
+    try {
+      const { addCsrfToken } = await import("@/utils/csrf");
+      const headers = addCsrfToken({ "Content-Type": "application/json" });
+      fetch(`${API_BASE}/auth/logout`, { 
+        method: "POST", 
+        credentials: "include",
+        headers
+      }).catch(() => {});
+    } catch {
+      // If CSRF fails, still try to logout
+      fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
+    }
   };
 
   return (

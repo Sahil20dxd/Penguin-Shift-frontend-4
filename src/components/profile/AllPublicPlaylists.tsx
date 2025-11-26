@@ -38,8 +38,18 @@ export default function AllPublicPlaylists() {
     try {
       setLoading(true);
       setError(null);
-      const data = await getExplorePublicPlaylists();
-      setPlaylists(data);
+      const result = await getExplorePublicPlaylists(); // No params = backward compatible, returns all
+      
+      // Handle both array (backward compatible) and paginated response
+      if (result && typeof result === 'object' && 'playlists' in result) {
+        // Paginated response
+        setPlaylists((result as any).playlists);
+      } else if (Array.isArray(result)) {
+        // Backward compatible: plain array
+        setPlaylists(result);
+      } else {
+        setPlaylists([]);
+      }
     } catch (err: any) {
       console.error("Failed to fetch public playlists:", err);
       setError(err.message || "Failed to load public playlists. Please try again later.");

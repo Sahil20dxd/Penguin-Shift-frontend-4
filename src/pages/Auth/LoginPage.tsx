@@ -111,9 +111,13 @@ export default function LoginPage() {
     }
 
     try {
+      // Add CSRF token for login request
+      const { addCsrfToken } = await import("@/utils/csrf");
+      const headers = addCsrfToken({ "Content-Type": "application/json" });
+      
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         credentials: "include",
         body: JSON.stringify({ identifier, password, remember, captchaToken }),
       });
@@ -126,71 +130,55 @@ export default function LoginPage() {
       }
 
       if (res.ok) {
-        // After successful login, fetch complete user data from /auth/me to get the role
+        // Login successful - tokens are now stored in HTTP-only cookies by backend
+        // Fetch complete user data from /auth/me using cookies (credentials: "include")
         // This ensures we have the most up-to-date user information including role
         try {
           const meRes = await fetch(`${API_BASE}/auth/me`, {
-            credentials: "include",
-            headers: data?.accessToken ? { Authorization: `Bearer ${data.accessToken}` } : {},
+            credentials: "include", // Uses HTTP-only cookies automatically
           });
           
           if (meRes.ok) {
             const meData = await meRes.json();
             const generatedUsername =
               meData?.username ||
-              data?.username ||
               identifier.trim().toLowerCase().replace(/\s+/g, "") ||
               "user" + Math.floor(Math.random() * 1000);
 
+            // Note: No token passed - tokens are in HTTP-only cookies, not accessible to JS
             login(
               {
                 name: meData?.username || meData?.name || identifier.trim(),
-                email: meData?.email || data?.email || identifier.trim(),
+                email: meData?.email || identifier.trim(),
                 username: generatedUsername,
-                role: meData?.role || data?.role || "USER",
+                role: meData?.role || "USER",
                 registeredWithMaster: meData?.registeredWithMaster || false,
+                isRestricted: meData?.isRestricted || false,
               },
-              data?.accessToken
+              undefined // Tokens are in HTTP-only cookies, not passed here
             );
+            
+            showToast("Welcome back! Login successful.", "success");
+            resetTurnstile();
+            navigate("/profile", { replace: true });
+            return;
           } else {
-            // Fallback to login response data if /auth/me fails
-            const generatedUsername =
-              data?.username ||
-              identifier.trim().toLowerCase().replace(/\s+/g, "") ||
-              "user" + Math.floor(Math.random() * 1000);
-
-            login(
-              {
-                name: data?.username || identifier.trim(),
-                email: data?.email || identifier.trim(),
-                username: generatedUsername,
-                role: data?.role || "USER",
-              },
-              data?.accessToken
-            );
+            // If /auth/me fails, still show success but user will need to refresh
+            showToast("Login successful, but couldn't fetch user details. Please refresh the page.", "warning");
+            setTimeout(() => {
+              window.location.href = "/profile";
+            }, 1000);
+            return;
           }
         } catch (meError) {
-          // Fallback to login response data if /auth/me fails
-          const generatedUsername =
-            data?.username ||
-            identifier.trim().toLowerCase().replace(/\s+/g, "") ||
-            "user" + Math.floor(Math.random() * 1000);
-
-          login(
-            {
-              name: data?.username || identifier.trim(),
-              email: data?.email || identifier.trim(),
-              username: generatedUsername,
-              role: data?.role || "USER",
-            },
-            data?.accessToken
-          );
+          // Network error fetching user data
+          console.error("Error fetching user data after login:", meError);
+          showToast("Login successful, but couldn't fetch user details. Please refresh the page.", "warning");
+          setTimeout(() => {
+            window.location.href = "/profile";
+          }, 1000);
+          return;
         }
-        
-        showToast("Welcome back! Login successful.", "success");
-        resetTurnstile();
-        navigate("/profile", { replace: true });
-        return;
       }
 
       // Too many attempts / lockouts

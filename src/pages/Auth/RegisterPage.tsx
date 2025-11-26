@@ -174,9 +174,13 @@ export default function RegisterPage() {
     }
 
     try {
+      // Add CSRF token for registration request
+      const { addCsrfToken } = await import('@/utils/csrf')
+      const headers = addCsrfToken({ 'Content-Type': 'application/json' })
+      
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify({
           username: username.trim(),

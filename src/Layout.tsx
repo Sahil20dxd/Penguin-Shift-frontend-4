@@ -65,12 +65,16 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout, loading } = useAuth();
 
-  if (currentPageName === "Auth") return <>{children}</>;
-
   // Smooth scroll to top on route change
+  // This hook must be called before any early returns to maintain hook order
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [location.pathname]);
+    if (currentPageName !== "Auth") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [location.pathname, currentPageName]);
+
+  // Early return after all hooks are called
+  if (currentPageName === "Auth") return <>{children}</>;
 
   if (loading)
     return (

@@ -166,7 +166,17 @@ export default function SelectDestination() {
       }
 
       const poll = window.setInterval(async () => {
-        if (popup.closed) {
+        // Check if popup is closed (wrapped in try-catch to handle COOP errors)
+        let isPopupClosed = false;
+        try {
+          isPopupClosed = popup.closed;
+        } catch (e) {
+          // Cross-Origin-Opener-Policy may block popup.closed check
+          // In this case, we'll rely on link status polling instead
+          isPopupClosed = false;
+        }
+        
+        if (isPopupClosed) {
           clearInterval(poll)
           await ensureDestinationLinked()
           return
@@ -175,7 +185,9 @@ export default function SelectDestination() {
           const s = (await checkLinkStatus(destinationPlatform)) as { linked: boolean }
           if (s?.linked) {
             clearInterval(poll)
-            popup.close()
+            try {
+              popup.close()
+            } catch {}
             setIsDestLinked(true)
             const dest = (await listPlaylists(destinationPlatform)) as {
               items?: DestPlaylist[]

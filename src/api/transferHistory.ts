@@ -11,8 +11,12 @@ import { getApiBase } from '@/utils/apiConfig'
 
 const API_BASE = getApiBase()
 
+// Removed localStorage token access for security - rely on HTTP-only cookies only
+// Tokens are stored in HTTP-only cookies by the backend
 function getAuthToken(): string {
-  return localStorage.getItem('authToken') || localStorage.getItem('jwt') || '';
+  // Return empty string - authentication is handled via HTTP-only cookies
+  // Backend will validate the cookie automatically when credentials: 'include' is used
+  return '';
 }
 
 /**

@@ -45,9 +45,13 @@ export default function ResendVerificationPage() {
 
     try {
       const API_BASE = getApiBase();
+      // Add CSRF token for resend verification request
+      const { addCsrfToken } = await import("@/utils/csrf");
+      const headers = addCsrfToken({ "Content-Type": "application/json" });
+      
       const response = await fetch(`${API_BASE}/auth/resend`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         credentials: "include",
         body: JSON.stringify({ email }),
       });

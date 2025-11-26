@@ -158,7 +158,17 @@ export default function SelectPlaylist() {
       // clear any prior poll
       if (pollRef.current) window.clearInterval(pollRef.current);
       pollRef.current = window.setInterval(async () => {
-        if (popup.closed) {
+        // Check if popup is closed (wrapped in try-catch to handle COOP errors)
+        let isPopupClosed = false;
+        try {
+          isPopupClosed = popup.closed;
+        } catch (e) {
+          // Cross-Origin-Opener-Policy may block popup.closed check
+          // In this case, we'll rely on link status polling instead
+          isPopupClosed = false;
+        }
+        
+        if (isPopupClosed) {
           if (pollRef.current) window.clearInterval(pollRef.current);
           pollRef.current = null;
           await checkPlatformLink(localPlatform);
@@ -187,7 +197,17 @@ export default function SelectPlaylist() {
           window.clearInterval(pollRef.current);
           pollRef.current = null;
         }
-        if (!popup.closed) {
+        // Check if popup is still open (wrapped in try-catch to handle COOP errors)
+        let isPopupOpen = true;
+        try {
+          isPopupOpen = !popup.closed;
+        } catch (e) {
+          // Cross-Origin-Opener-Policy may block popup.closed check
+          // Assume popup is still open and try to close it
+          isPopupOpen = true;
+        }
+        
+        if (isPopupOpen) {
           try {
             popup.close();
           } catch {}
@@ -276,8 +296,9 @@ export default function SelectPlaylist() {
         `${API_BASE}/api/platforms/force-reconnect/${localPlatform}`,
         {
           method: "POST",
+          credentials: "include", // Use HTTP-only cookies for authentication
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -299,7 +320,17 @@ export default function SelectPlaylist() {
         );
         if (!popup) throw new Error("Popup blocked");
         const poll = window.setInterval(async () => {
-          if (popup.closed) {
+          // Check if popup is closed (wrapped in try-catch to handle COOP errors)
+          let isPopupClosed = false;
+          try {
+            isPopupClosed = popup.closed;
+          } catch (e) {
+            // Cross-Origin-Opener-Policy may block popup.closed check
+            // In this case, we'll rely on link status polling instead
+            isPopupClosed = false;
+          }
+          
+          if (isPopupClosed) {
             clearInterval(poll);
             await checkPlatformLink(localPlatform);
           }

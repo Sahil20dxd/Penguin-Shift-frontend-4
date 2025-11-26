@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 import { SearchX } from "lucide-react";
-import { getExplorePublicPlaylists } from "@/api/publicPlaylists";
+import { getExplorePublicPlaylists, type PaginatedPlaylistsResponse } from "@/api/publicPlaylists";
 import SearchBar from "@/components/explore/SearchBar";
 import FiltersBar from "@/components/explore/FiltersBar";
 import AppliedFiltersChips from "@/components/explore/AppliedFiltersChips";
@@ -48,42 +48,8 @@ export default function ExplorePublicPlaylists() {
   const [playlists, setPlaylists] = useState<PublicPlaylist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getExplorePublicPlaylists()
-      .then((data) => {
-        console.log('[Explore] Received playlists from API:', data);
-        console.log('[Explore] Total playlists received:', data.length);
-        if (data.length > 0) {
-          console.log('[Explore] Sample playlist:', data[0]);
-        } else {
-          console.warn('[Explore] No playlists returned from API. Check backend database.');
-        }
-        setPlaylists(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('[Explore] Failed to load public playlists:', err);
-
-        // Provide specific error messages based on error type
-        let errorMessage = "Failed to load public playlists. ";
-
-        if (err.message.includes('401')) {
-          errorMessage += "Authentication issue detected. This endpoint should be public.";
-        } else if (err.message.includes('404')) {
-          errorMessage += "Backend endpoint not found. Please check backend configuration.";
-        } else if (err.message.includes('500')) {
-          errorMessage += "Server error. Please try again later or contact support.";
-        } else if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
-          errorMessage += "Cannot connect to backend. Please check if backend is running.";
-        } else {
-          errorMessage += err.message;
-        }
-
-        setError(errorMessage);
-        setLoading(false);
-      });
-  }, []);
+  const [totalResults, setTotalResults] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -103,89 +69,91 @@ export default function ExplorePublicPlaylists() {
   const [toastMessage, setToastMessage] = useState("");
 
   const pageSize = 24; // cards per page
-  const isLoading = loading; // no backend yet, so loading is always false
 
-  // Filter and sort playlists
-  const filteredPlaylists = useMemo(() => {
-    console.log('[Explore] Starting filter with playlists:', playlists.length);
-    let result = playlists.filter((p) => p.isPublic === true);
-    console.log('[Explore] After isPublic filter:', result.length);
-
-    // Search by title or owner name
-    if (debouncedSearch) {
-      const query = debouncedSearch.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(query) ||
-          (p.ownerName && p.ownerName.toLowerCase().includes(query))
-      );
-      console.log('[Explore] After search filter:', result.length);
-    }
-
-    // Platform filter
-    if (filters.platform && filters.platform !== "all") {
-      result = result.filter((p) => p.platform === filters.platform);
-      console.log('[Explore] After platform filter:', result.length);
-    }
-
-    // Genre filter
-    if (filters.genre && filters.genre !== "all") {
-      result = result.filter((p) => p.genre === filters.genre);
-      console.log('[Explore] After genre filter:', result.length);
-    }
-
-    // Track count filters
-    if (filters.minTracks) {
-      const min = parseInt(filters.minTracks, 10);
-      result = result.filter((p) => (p.trackCount ?? 0) >= min);
-    }
-
-    if (filters.maxTracks) {
-      const max = parseInt(filters.maxTracks, 10);
-      result = result.filter((p) => (p.trackCount ?? 0) <= max);
-    }
-
-    // Date filter
-    if (filters.createdFrom) {
-      const fromDate = new Date(filters.createdFrom);
-      result = result.filter((p) => new Date(p.created_date) >= fromDate);
-    }
-
-    // Sorting
-    switch (filters.sort) {
-      case "recent":
-        result.sort(
-          (a, b) =>
-            new Date(b.created_date).getTime() -
-            new Date(a.created_date).getTime()
-        );
-        break;
-      case "tracks":
-        result.sort((a, b) => (b.trackCount ?? 0) - (a.trackCount ?? 0));
-        break;
-
-      case "a-z":
-        result.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      default:
-        break;
-    }
-
-    return result;
-  }, [playlists, debouncedSearch, filters]);
-
-  // Pagination
-  const totalResults = filteredPlaylists.length;
-  const totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
-  const paginatedPlaylists = filteredPlaylists.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  // Reset page when filters or search change
+  // Fetch playlists with server-side pagination, filtering, and sorting
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, filters]);
+    setLoading(true);
+    setError(null);
+
+    const fetchPlaylists = async () => {
+      try {
+        const options = {
+          page: currentPage,
+          limit: pageSize,
+          search: debouncedSearch || undefined,
+          platform: filters.platform !== "all" ? filters.platform : undefined,
+          genre: filters.genre !== "all" ? filters.genre : undefined,
+          minTracks: filters.minTracks ? parseInt(filters.minTracks, 10) : undefined,
+          maxTracks: filters.maxTracks ? parseInt(filters.maxTracks, 10) : undefined,
+          createdFrom: filters.createdFrom || undefined,
+          sort: filters.sort,
+        };
+
+        const result = await getExplorePublicPlaylists(options);
+
+        // Check if result is paginated response or plain array (backward compatible)
+        if (result && typeof result === 'object' && 'playlists' in result && 'total' in result) {
+          // Paginated response
+          const paginated = result as PaginatedPlaylistsResponse;
+          setPlaylists(paginated.playlists);
+          setTotalResults(paginated.total);
+          setTotalPages(paginated.totalPages);
+          console.log('[Explore] Received paginated playlists:', paginated.playlists.length, 'of', paginated.total);
+        } else if (Array.isArray(result)) {
+          // Backward compatible: plain array response (fallback)
+          setPlaylists(result);
+          setTotalResults(result.length);
+          setTotalPages(Math.max(1, Math.ceil(result.length / pageSize)));
+          console.log('[Explore] Received all playlists (backward compatible):', result.length);
+        } else {
+          console.warn('[Explore] Unexpected response format:', typeof result);
+          setPlaylists([]);
+          setTotalResults(0);
+          setTotalPages(1);
+        }
+
+        setLoading(false);
+      } catch (err: any) {
+        console.error('[Explore] Failed to load public playlists:', err);
+
+        // Provide specific error messages based on error type
+        let errorMessage = "Failed to load public playlists. ";
+
+        if (err.message.includes('401')) {
+          errorMessage += "Authentication issue detected. This endpoint should be public.";
+        } else if (err.message.includes('404')) {
+          errorMessage += "Backend endpoint not found. Please check backend configuration.";
+        } else if (err.message.includes('500')) {
+          errorMessage += "Server error. Please try again later or contact support.";
+        } else if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+          errorMessage += "Cannot connect to backend. Please check if backend is running.";
+        } else {
+          errorMessage += err.message;
+        }
+
+        setError(errorMessage);
+        setPlaylists([]);
+        setTotalResults(0);
+        setTotalPages(1);
+        setLoading(false);
+      }
+    };
+
+    fetchPlaylists();
+  }, [currentPage, debouncedSearch, filters, pageSize]);
+
+  // Reset page when filters or search change (but not on initial load)
+  // This must be a separate effect to maintain hook order
+  useEffect(() => {
+    // Only reset if we're not already on page 1 to avoid unnecessary re-renders
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, filters.platform, filters.genre, filters.minTracks, filters.maxTracks, filters.createdFrom, filters.sort]);
+
+  // Use playlists directly (already paginated from server)
+  const paginatedPlaylists = playlists;
 
   // Auto-hide toast
   useEffect(() => {
@@ -304,7 +272,7 @@ export default function ExplorePublicPlaylists() {
         )}
 
         <div className="mb-4 text-sm text-gray-600">
-          {isLoading ? (
+          {loading ? (
             <Skeleton className="h-5 w-32" />
           ) : (
             totalResults +
@@ -314,7 +282,7 @@ export default function ExplorePublicPlaylists() {
           )}
         </div>
 
-        {isLoading && playlists.length === 0 && (
+        {loading && playlists.length === 0 && (
           <motion.div 
             initial="hidden"
             animate="visible"
@@ -346,7 +314,7 @@ export default function ExplorePublicPlaylists() {
           </motion.div>
         )}
 
-        {!isLoading && paginatedPlaylists.length === 0 && (
+        {!loading && paginatedPlaylists.length === 0 && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -387,7 +355,7 @@ export default function ExplorePublicPlaylists() {
           </motion.div>
         )}
 
-        {!isLoading && paginatedPlaylists.length > 0 && (
+        {!loading && paginatedPlaylists.length > 0 && (
           <>
             <motion.div 
               initial="hidden"
