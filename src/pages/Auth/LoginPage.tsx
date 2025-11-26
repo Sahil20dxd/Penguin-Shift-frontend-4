@@ -126,19 +126,67 @@ export default function LoginPage() {
       }
 
       if (res.ok) {
-        const generatedUsername =
-          data?.username ||
-          identifier.trim().toLowerCase().replace(/\s+/g, "") ||
-          "user" + Math.floor(Math.random() * 1000);
+        // After successful login, fetch complete user data from /auth/me to get the role
+        // This ensures we have the most up-to-date user information including role
+        try {
+          const meRes = await fetch(`${API_BASE}/auth/me`, {
+            credentials: "include",
+            headers: data?.accessToken ? { Authorization: `Bearer ${data.accessToken}` } : {},
+          });
+          
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            const generatedUsername =
+              meData?.username ||
+              data?.username ||
+              identifier.trim().toLowerCase().replace(/\s+/g, "") ||
+              "user" + Math.floor(Math.random() * 1000);
 
-        login(
-          {
-            name: data?.username || identifier.trim(),
-            email: data?.email || identifier.trim(),
-            username: generatedUsername,
-          },
-          data?.accessToken
-        );
+            login(
+              {
+                name: meData?.username || meData?.name || identifier.trim(),
+                email: meData?.email || data?.email || identifier.trim(),
+                username: generatedUsername,
+                role: meData?.role || data?.role || "USER",
+                registeredWithMaster: meData?.registeredWithMaster || false,
+              },
+              data?.accessToken
+            );
+          } else {
+            // Fallback to login response data if /auth/me fails
+            const generatedUsername =
+              data?.username ||
+              identifier.trim().toLowerCase().replace(/\s+/g, "") ||
+              "user" + Math.floor(Math.random() * 1000);
+
+            login(
+              {
+                name: data?.username || identifier.trim(),
+                email: data?.email || identifier.trim(),
+                username: generatedUsername,
+                role: data?.role || "USER",
+              },
+              data?.accessToken
+            );
+          }
+        } catch (meError) {
+          // Fallback to login response data if /auth/me fails
+          const generatedUsername =
+            data?.username ||
+            identifier.trim().toLowerCase().replace(/\s+/g, "") ||
+            "user" + Math.floor(Math.random() * 1000);
+
+          login(
+            {
+              name: data?.username || identifier.trim(),
+              email: data?.email || identifier.trim(),
+              username: generatedUsername,
+              role: data?.role || "USER",
+            },
+            data?.accessToken
+          );
+        }
+        
         showToast("Welcome back! Login successful.", "success");
         resetTurnstile();
         navigate("/profile", { replace: true });

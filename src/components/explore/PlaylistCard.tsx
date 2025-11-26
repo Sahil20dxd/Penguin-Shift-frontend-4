@@ -62,13 +62,19 @@ export default function PlaylistCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ 
+        duration: 0.3,
+        type: "spring",
+        stiffness: 300,
+        damping: 25
+      }}
     >
-      <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300 border-gray-200">
+      <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-200 cursor-pointer group">
         {/* Cover image */}
         <div className="relative aspect-square bg-gradient-to-br from-purple-400 via-pink-300 to-blue-400 overflow-hidden">
           {playlist.coverUrl ? (
@@ -86,32 +92,41 @@ export default function PlaylistCard({
           )}
 
           {/* Hover overlay actions */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => onViewDetails(playlist)}
-              className="bg-white/90 hover:bg-white"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              View Details
-            </Button>
-
-            {playlist.isPublic && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-4 gap-2"
+          >
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCopyLink(playlist);
-                }}
+                onClick={() => onViewDetails(playlist)}
                 className="bg-white/90 hover:bg-white"
-                aria-label="Copy share link"
               >
-                <Link2 className="w-4 h-4" />
+                <Eye className="w-4 h-4 mr-2" />
+                View Details
               </Button>
+            </motion.div>
+
+            {playlist.isPublic && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCopyLink(playlist);
+                  }}
+                  className="bg-white/90 hover:bg-white"
+                  aria-label="Copy share link"
+                >
+                  <Link2 className="w-4 h-4" />
+                </Button>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Content */}

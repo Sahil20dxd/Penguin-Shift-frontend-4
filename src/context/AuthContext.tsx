@@ -15,6 +15,9 @@ export interface User {
   name: string;
   email: string;
   username: string;
+  role?: string; // 'ADMIN', 'CURATOR', 'USER', etc.
+  registeredWithMaster?: boolean; // Track if user registered with master credentials
+  isRestricted?: boolean; // Track if user is restricted from creating public playlists
 }
 
 type AuthFetchInit = RequestInit & { json?: unknown };
@@ -93,13 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (res && res.ok) {
           const data = await res.json();
+          // Normalize role: backend may return 'ROLE_ADMIN' or 'ADMIN', we preserve it as-is
+          // Components check for both formats
           const u: User = {
             name: data.username || data.name || "User",
             email: data.email,
-            username:
-              data.username ||
-              data.name?.toLowerCase().replace(/\s+/g, "") ||
-              "user" + Math.floor(Math.random() * 1000),
+            username: data.username || data.email.split("@")[0],
+            role: data.role || "USER",
+            registeredWithMaster: data.registeredWithMaster || false,
+            isRestricted: data.isRestricted || false,
           };
           setUser(u);
           localStorage.setItem("penguinshift_user", JSON.stringify(u));
@@ -126,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userData.name?.toLowerCase().replace(/\s+/g, "") ||
       "user" + Math.floor(Math.random() * 1000);
 
-    const finalUser: User = { ...userData, username };
+    const finalUser: User = { ...userData, username, role: userData.role || "USER" };
     setUser(finalUser);
     localStorage.setItem("penguinshift_user", JSON.stringify(finalUser));
 

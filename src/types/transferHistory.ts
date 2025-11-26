@@ -13,6 +13,8 @@ export interface TransferHistoryResponse {
   createdAt: string;
   isPublic: boolean;
   publicPlaylistId?: number;
+  isFlagged?: boolean;              // Is this playlist flagged?
+  moderationStatus?: string;        // PENDING, APPROVED, HIDDEN
 }
 
 export interface TransferHistoryTrackResponse {

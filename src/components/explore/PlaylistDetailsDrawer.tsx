@@ -10,10 +10,30 @@ import {
 import { format } from 'date-fns'
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Music2, Clock, Calendar, Link2, Plus, RefreshCw, AlertCircle } from "lucide-react";
+import { Music2, Clock, Calendar, Link2, Plus, RefreshCw, AlertCircle, Flag, Loader2, Ban, MessageSquareX, FileX, HelpCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/useToast";
 import type { PublicPlaylist } from "@/types/publicPlaylist";
 import { getTransferHistoryTracksByTransferId } from "@/api/transferHistory";
+import { reportPlaylist } from "@/api/publicPlaylists";
 import type { TransferHistoryTrackResponse } from "@/types/transferHistory";
 
 // Important constant: platform-specific badge colors
@@ -82,9 +102,14 @@ export default function PlaylistDetailsDrawer({
   onCopyLink,
   onAddToLibrary,
 }: PlaylistDetailsDrawerProps) {
+  const { showToast, Toast } = useToast();
   const [tracks, setTracks] = useState<TransferHistoryTrackResponse[]>([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
   const [tracksError, setTracksError] = useState<string | null>(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<string>("");
+  const [reportDetails, setReportDetails] = useState<string>("");
+  const [reporting, setReporting] = useState(false);
 
   // Fetch tracks when drawer opens and playlist has transferId
   useEffect(() => {
@@ -138,6 +163,35 @@ export default function PlaylistDetailsDrawer({
           setTracksError('Failed to load tracks. Please try again');
         })
         .finally(() => setLoadingTracks(false));
+    }
+  };
+
+  const handleReportPlaylist = async () => {
+    if (!playlist) {
+      showToast('Playlist information is missing', 'error');
+      return;
+    }
+
+    if (!reportReason) {
+      showToast('Please select a reason for reporting', 'error');
+      return;
+    }
+
+    setReporting(true);
+    try {
+      await reportPlaylist(playlist.id, {
+        reason: reportReason as 'OFFENSIVE' | 'SPAM' | 'WRONG_TAGS' | 'OTHER',
+        details: reportDetails.trim() || undefined,
+      });
+      showToast('Playlist reported successfully. Thank you for helping keep our community safe.', 'success');
+      setReportDialogOpen(false);
+      setReportReason('');
+      setReportDetails('');
+    } catch (error: any) {
+      console.error('Failed to report playlist:', error);
+      showToast(error.message || 'Failed to report playlist. Please try again.', 'error');
+    } finally {
+      setReporting(false);
     }
   };
 
@@ -248,6 +302,155 @@ export default function PlaylistDetailsDrawer({
                 <Link2 className="w-4 h-4" />
               </Button>
             )}
+
+            <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  aria-label="Report playlist"
+                  className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                >
+                  <Flag className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-red-100 rounded-full">
+                      <Flag className="w-5 h-5 text-red-600" />
+                    </div>
+                    <DialogTitle className="text-2xl">Report Playlist</DialogTitle>
+                  </div>
+                  <DialogDescription className="text-base pt-2">
+                    We take reports seriously. Help us maintain a safe and respectful community by reporting content that violates our guidelines.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-5 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="report-reason" className="text-sm font-semibold flex items-center gap-1">
+                      Why are you reporting this playlist? <span className="text-red-500">*</span>
+                    </Label>
+                    <Select value={reportReason} onValueChange={setReportReason}>
+                      <SelectTrigger id="report-reason" className="h-11">
+                        <SelectValue placeholder="Choose a reason..." />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px] w-[var(--radix-select-trigger-width)] bg-white border border-gray-200 shadow-lg">
+                        <SelectItem value="OFFENSIVE" className="py-3 cursor-pointer focus:bg-red-50 bg-white hover:bg-red-50">
+                          <div className="flex items-start gap-3 w-full">
+                            <div className="p-1.5 bg-red-100 rounded-md mt-0.5 flex-shrink-0">
+                              <Ban className="w-4 h-4 text-red-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">Offensive Content</div>
+                              <div className="text-xs text-gray-600 mt-0.5">Contains harmful, hateful, or inappropriate material</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="SPAM" className="py-3 cursor-pointer focus:bg-orange-50 bg-white hover:bg-orange-50">
+                          <div className="flex items-start gap-3 w-full">
+                            <div className="p-1.5 bg-orange-100 rounded-md mt-0.5 flex-shrink-0">
+                              <MessageSquareX className="w-4 h-4 text-orange-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">Spam or Commercial</div>
+                              <div className="text-xs text-gray-600 mt-0.5">Repetitive, misleading, or promotional content</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="WRONG_TAGS" className="py-3 cursor-pointer focus:bg-yellow-50 bg-white hover:bg-yellow-50">
+                          <div className="flex items-start gap-3 w-full">
+                            <div className="p-1.5 bg-yellow-100 rounded-md mt-0.5 flex-shrink-0">
+                              <FileX className="w-4 h-4 text-yellow-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">Incorrect Tags or Genre</div>
+                              <div className="text-xs text-gray-600 mt-0.5">Playlist is mislabeled or incorrectly categorized</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="OTHER" className="py-3 cursor-pointer focus:bg-blue-50 bg-white hover:bg-blue-50">
+                          <div className="flex items-start gap-3 w-full">
+                            <div className="p-1.5 bg-blue-100 rounded-md mt-0.5 flex-shrink-0">
+                              <HelpCircle className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">Other Issue</div>
+                              <div className="text-xs text-gray-600 mt-0.5">Something else that doesn't fit the above categories</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {reportReason && (
+                      <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-xs text-blue-800">
+                          {reportReason === 'OFFENSIVE' && 'Thank you for reporting. We review offensive content reports within 24 hours.'}
+                          {reportReason === 'SPAM' && 'Spam reports help us maintain quality. Your report will be reviewed promptly.'}
+                          {reportReason === 'WRONG_TAGS' && 'We appreciate your help in keeping playlists properly categorized.'}
+                          {reportReason === 'OTHER' && 'Please provide details below to help us understand the issue better.'}
+                        </p>
+                      </div>
+                    )}
+                    {!reportReason && (
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Please select a reason to continue
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="report-details" className="text-sm font-semibold">
+                      Additional Information <span className="text-gray-400 font-normal">(Optional but helpful)</span>
+                    </Label>
+                    <Textarea
+                      id="report-details"
+                      placeholder="Tell us more about the issue... (e.g., specific tracks, timestamps, or details that would help our team review)"
+                      value={reportDetails}
+                      onChange={(e) => setReportDetails(e.target.value)}
+                      rows={5}
+                      maxLength={500}
+                      className="resize-none text-sm"
+                    />
+                   
+                  </div>
+                </div>
+                <DialogFooter className="gap-2 sm:gap-0 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setReportDialogOpen(false);
+                      setReportReason('');
+                      setReportDetails('');
+                    }}
+                    disabled={reporting}
+                    className="flex-1 sm:flex-initial"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleReportPlaylist}
+                    disabled={!reportReason || reporting}
+                    className={`flex-1 sm:flex-initial ${
+                      reportReason && !reporting
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {reporting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Flag className="w-4 h-4 mr-2" />
+                        Submit Report
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Tracks list */}
@@ -361,6 +564,7 @@ export default function PlaylistDetailsDrawer({
             )}
           </div>
         </div>
+        {Toast}
       </SheetContent>
     </Sheet>
   );

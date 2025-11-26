@@ -21,6 +21,7 @@ import {
   XCircle,
   AlertTriangle,
   MailCheck,
+  Shield,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/context/useAuth'
@@ -35,6 +36,8 @@ type MeResponse = {
   verified: boolean
   canChangePassword: boolean
   authProvider?: 'LOCAL' | 'GOOGLE'
+  registeredWithMaster?: boolean
+  isRestricted?: boolean
 }
 
 import { getApiBase } from '@/utils/apiConfig'
@@ -222,17 +225,26 @@ export default function AccountSettings() {
   const handleDeleteAccount = async () => {
     setDeleting(true)
     try {
-      const res = await authFetch(`${API_BASE}/auth/me`, { method: 'DELETE' })
-      if (res.ok || res.status === 401 || res.status === 403) {
-        showToast('Your account has been deleted. We’re sorry to see you go.', 'success')
+      const res = await authFetch(`${API_BASE}/auth/delete-account`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      
+      if (res.ok) {
+        showToast(data.message || "Your account has been deleted. We are sorry to see you go.", "success")
         logout()
-        window.location.assign('/')
+        setTimeout(() => {
+          window.location.assign('/')
+        }, 1500)
         return
       }
-      const msg = await res.text()
-      showToast(msg || 'We couldn’t delete your account. Please try again.', 'error')
+      
+      if (res.status === 403) {
+        showToast(data.message || 'Admins cannot delete their accounts.', 'error')
+        return
+      }
+      
+      showToast(data.message || "We couldn't delete your account. Please try again.", "error")
     } catch {
-      showToast('We couldn’t connect to the server. Please try again.', 'error')
+      showToast('We couldnt connect to the server. Please try again.', 'error')
     } finally {
       setDeleting(false)
       setConfirmingDelete(false)
@@ -270,6 +282,43 @@ export default function AccountSettings() {
           </div>
           <p className='text-gray-600'>Manage your profile information and password securely.</p>
         </motion.div>
+
+        {/* Admin Account Indicator */}
+        {me?.role === 'ADMIN' || me?.role === 'CURATOR' || me?.role === 'ROLE_ADMIN' || me?.role === 'ROLE_CURATOR' ? (
+          <Card className='bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 shadow-lg rounded-2xl overflow-hidden mb-6'>
+            <CardContent className='p-6'>
+              <div className='flex items-center gap-3'>
+                <Shield className='w-6 h-6 text-purple-600' />
+                <div>
+                  <h3 className='text-lg font-semibold text-purple-900'>Admin Account</h3>
+                  <p className='text-sm text-purple-700'>
+                    You are logged in as an administrator. You have access to moderation tools and user management.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {/* Account Restriction Notice */}
+        {me?.isRestricted && (me?.role !== 'ADMIN' && me?.role !== 'CURATOR' && me?.role !== 'ROLE_ADMIN' && me?.role !== 'ROLE_CURATOR') ? (
+          <Card className='bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 shadow-lg rounded-2xl overflow-hidden mb-6'>
+            <CardContent className='p-6'>
+              <div className='flex items-start gap-3'>
+                <AlertTriangle className='w-6 h-6 text-red-600 mt-0.5' />
+                <div className='flex-1'>
+                  <h3 className='text-lg font-semibold text-red-900 mb-1'>Account Restricted</h3>
+                  <p className='text-sm text-red-700 mb-2'>
+                    Your account has been restricted from creating public playlists due to a violation of our community guidelines.
+                  </p>
+                  <p className='text-sm text-red-600'>
+                    If you believe this is an error or have questions, please contact our support team for assistance.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card className='bg-white shadow-lg rounded-2xl overflow-hidden'>
           <CardHeader className='border-b border-gray-100 p-6'>
@@ -488,42 +537,90 @@ export default function AccountSettings() {
               </Button>
             </div>
 
-            {/* Delete account */}
-            <div className='pt-6 border-t border-gray-100'>
-              {!confirmingDelete ? (
-                <button
-                  type='button'
-                  onClick={() => setConfirmingDelete(true)}
-                  className='text-red-600 text-sm hover:underline'
-                >
-                  Delete my account
-                </button>
-              ) : (
-                <div className='mt-3 rounded-md border border-red-200 bg-red-50 p-4'>
-                  <div className='flex items-start gap-3'>
-                    <AlertTriangle className='w-5 h-5 text-red-600 mt-0.5' />
-                    <div className='flex-1'>
-                      <p className='text-red-700 font-medium mb-1'>
-                        Permanently delete your account?
-                      </p>
-                      <p className='text-red-700/90 text-sm mb-3'>
-                        This action can’t be undone. Your profile and related data will be removed.
-                      </p>
-                      <div className='flex gap-2'>
-                        <Button variant='destructive' disabled={deleting} onClick={handleDeleteAccount}>
-                          {deleting ? 'Deleting…' : 'Yes, delete my account'}
-                        </Button>
-                        <Button variant='outline' onClick={() => setConfirmingDelete(false)} disabled={deleting}>
-                          Cancel
-                        </Button>
+            {/* Delete account - Only show for regular users (not admins) */}
+            {me?.role !== 'ADMIN' && me?.role !== 'CURATOR' && me?.role !== 'ROLE_ADMIN' && me?.role !== 'ROLE_CURATOR' && (
+              <div className='pt-6 border-t border-gray-100'>
+                {!confirmingDelete ? (
+                  <button
+                    type='button'
+                    onClick={() => setConfirmingDelete(true)}
+                    className='text-red-600 text-sm hover:underline'
+                  >
+                    Delete my account
+                  </button>
+                ) : (
+                  <div className='mt-3 rounded-md border border-red-200 bg-red-50 p-4'>
+                    <div className='flex items-start gap-3'>
+                      <AlertTriangle className='w-5 h-5 text-red-600 mt-0.5' />
+                      <div className='flex-1'>
+                        <p className='text-red-700 font-medium mb-1'>
+                          Permanently delete your account?
+                        </p>
+                        <p className='text-red-700/90 text-sm mb-3'>
+                          This action can't be undone. Your profile and related data will be removed.
+                        </p>
+                        <div className='flex gap-2'>
+                          <Button variant='destructive' disabled={deleting} onClick={handleDeleteAccount}>
+                            {deleting ? 'Deleting…' : 'Yes, delete my account'}
+                          </Button>
+                          <Button variant='outline' onClick={() => setConfirmingDelete(false)} disabled={deleting}>
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
+            
+            
           </CardContent>
         </Card>
+
+        {/* Become Admin Section */}
+        {me?.registeredWithMaster && me.role !== 'ADMIN' && (
+          <Card className="bg-white shadow-lg rounded-2xl overflow-hidden border-2 border-purple-200 mt-6">
+            <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Become Admin
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  You registered with master credentials. You can promote yourself to an admin account to access the moderation dashboard.
+                </p>
+                <Button
+                  onClick={async () => {
+                    try {
+                      const res = await authFetch(`${API_BASE}/auth/promote-to-admin`, {
+                        method: 'POST',
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.success) {
+                        showToast('You have been promoted to admin! Please refresh the page.', 'success');
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 2000);
+                      } else {
+                        showToast(data.message || 'Failed to promote to admin', 'error');
+                      }
+                    } catch (err: any) {
+                      console.error('Error promoting to admin:', err);
+                      showToast('Failed to promote to admin. Please try again.', 'error');
+                    }
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Promote to Admin
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
       {Toast}
     </>

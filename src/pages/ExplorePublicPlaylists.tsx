@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { SearchX } from "lucide-react";
 import { getExplorePublicPlaylists } from "@/api/publicPlaylists";
 import SearchBar from "@/components/explore/SearchBar";
@@ -256,7 +256,12 @@ export default function ExplorePublicPlaylists() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6"
+    >
       <div className="max-w-7xl mx-auto">
         {toastMessage && (
           <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2">
@@ -309,54 +314,117 @@ export default function ExplorePublicPlaylists() {
           )}
         </div>
 
-        {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {isLoading && playlists.length === 0 && (
+          <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: {
+                transition: {
+                  staggerChildren: 0.1
+                }
+              }
+            }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
             {Array(8)
               .fill(0)
               .map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-square rounded-xl" />
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
+                <motion.div
+                  key={i}
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 }
+                  }}
+                  className="space-y-3"
+                >
+                  <Skeleton className="aspect-square rounded-xl animate-pulse" />
+                  <Skeleton className="h-5 w-3/4 animate-pulse" />
+                  <Skeleton className="h-4 w-1/2 animate-pulse" />
+                </motion.div>
               ))}
-          </div>
+          </motion.div>
         )}
 
         {!isLoading && paginatedPlaylists.length === 0 && (
-          <div className="text-center py-16">
-            <div className="mb-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center py-16"
+          >
+            <motion.div 
+              className="mb-6"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                repeatDelay: 3
+              }}
+            >
               <SearchX
                 className="w-20 h-20 text-gray-300 mx-auto"
                 aria-hidden="true"
               />
-            </div>
+            </motion.div>
             <h3 className="text-2xl font-semibold text-gray-900 mb-2">
               No playlists found
             </h3>
             <p className="text-gray-600 mb-6">
               Try adjusting your filters or search query
             </p>
-            <Button onClick={handleClearFilters} variant="outline">
-              Clear all filters
-            </Button>
-          </div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button onClick={handleClearFilters} variant="outline">
+                Clear all filters
+              </Button>
+            </motion.div>
+          </motion.div>
         )}
 
         {!isLoading && paginatedPlaylists.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              <AnimatePresence mode="wait">
-                {paginatedPlaylists.map((playlist) => (
-                  <PlaylistCard
+            <motion.div 
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.1
+                  }
+                }
+              }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            >
+              <AnimatePresence mode="popLayout">
+                {paginatedPlaylists.map((playlist, index) => (
+                  <motion.div
                     key={playlist.id}
-                    playlist={playlist}
-                    onViewDetails={handleViewDetails}
-                    onCopyLink={handleCopyLink}
-                  />
+                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                    transition={{ 
+                      delay: index * 0.05,
+                      duration: 0.3,
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 25
+                    }}
+                  >
+                    <PlaylistCard
+                      playlist={playlist}
+                      onViewDetails={handleViewDetails}
+                      onCopyLink={handleCopyLink}
+                    />
+                  </motion.div>
                 ))}
               </AnimatePresence>
-            </div>
+            </motion.div>
 
             {totalPages > 1 && (
               <Pagination
@@ -378,6 +446,6 @@ export default function ExplorePublicPlaylists() {
           onAddToLibrary={handleAddToLibrary}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

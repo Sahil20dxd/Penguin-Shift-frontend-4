@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox"; // if you don’t have this, swap to a native input
+import { Checkbox } from "@/components/ui/checkbox"; // if you don't have this, swap to a native input
 import {
   Search,
   ArrowRight,
@@ -27,6 +27,7 @@ import {
   RefreshCw,
   PlugZap,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useShift } from "@/components/shift/ShiftContext";
 import {
   checkLinkStatus,
@@ -333,27 +334,43 @@ export default function SelectPlaylist() {
   const canContinue = selectedPlaylistIds.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6"
+    >
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Select Your Playlists
           </h1>
           <p className="text-gray-600">
             Choose playlists to transfer from your account
           </p>
-        </div>
+        </motion.div>
 
-        {error && (
-          <div
-            role="alert"
-            className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700 text-sm"
-          >
-            {error.includes("HTTP") || error.includes("401")
-              ? "Something went wrong. Please reconnect your account and try again."
-              : error}
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              role="alert"
+              className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700 text-sm shadow-sm"
+            >
+              {error.includes("HTTP") || error.includes("401")
+                ? "Something went wrong. Please reconnect your account and try again."
+                : error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Source Platform</h2>
@@ -595,6 +612,6 @@ export default function SelectPlaylist() {
           </Link>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -30,6 +30,7 @@ import { startPublicPlaylistTransfer } from '@/api/publicPlaylists'
 import { checkPublicPlaylistNameAvailability } from '@/api/publicPlaylists'
 import { MUSIC_GENRES } from '@/constants/genres'
 import { createPageUrl } from '@/utils'
+import { useAuth } from '@/context/useAuth'
 
 type LocationState = {
   playlist?: PublicPlaylist
@@ -43,6 +44,9 @@ export default function PublicPlaylistSelectDestination() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const { updateState } = useShift()
+  const { user } = useAuth()
+  
+  const isRestricted = user?.isRestricted === true
 
   const { playlist, tracks } = (location.state || {}) as LocationState
 
@@ -130,6 +134,12 @@ export default function PublicPlaylistSelectDestination() {
     }
     
     if (makePublic) {
+      // Check if user is restricted
+      if (isRestricted) {
+        setError('Your account has been restricted from creating public playlists due to a violation of our community guidelines. Please contact support if you have questions.')
+        return
+      }
+      
       const publicNameError = validateTextInput(publicPlaylistName.trim())
       if (publicNameError) {
         setPublicPlaylistNameModerationError(publicNameError)
@@ -288,12 +298,14 @@ export default function PublicPlaylistSelectDestination() {
           </div>
 
           {/* Make Public Toggle */}
-          <div className='mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50'>
-            <label className='flex items-start gap-3 cursor-pointer'>
+          <div className={`mb-6 p-4 border rounded-lg ${isRestricted ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
+            <label className={`flex items-start gap-3 ${isRestricted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
               <input
                 type='checkbox'
                 checked={makePublic}
+                disabled={isRestricted}
                 onChange={(e) => {
+                  if (isRestricted) return
                   setMakePublic(e.target.checked)
                   if (e.target.checked && !publicPlaylistName) {
                     setPublicPlaylistName(playlistName)
@@ -303,12 +315,23 @@ export default function PublicPlaylistSelectDestination() {
               />
               <div className='flex-1'>
                 <div className='flex items-center gap-2 font-medium'>
-                  <Globe className='w-4 h-4 text-purple-600' />
+                  <Globe className={`w-4 h-4 ${isRestricted ? 'text-red-600' : 'text-purple-600'}`} />
                   <span>Make this playlist public</span>
                 </div>
-                <p className='text-xs text-gray-600 mt-1'>
-                  Share your playlist with the PenguinShift community. Other users will be able to discover and view your playlist in the Explore section.
-                </p>
+                {isRestricted ? (
+                  <div className='mt-2 p-3 bg-red-100 border border-red-200 rounded-md'>
+                    <p className='text-sm text-red-800 font-medium mb-1'>
+                      Account Restricted
+                    </p>
+                    <p className='text-xs text-red-700'>
+                      Your account has been restricted from creating public playlists due to a violation of our community guidelines. Please contact support if you have questions.
+                    </p>
+                  </div>
+                ) : (
+                  <p className='text-xs text-gray-600 mt-1'>
+                    Share your playlist with the PenguinShift community. Other users will be able to discover and view your playlist in the Explore section.
+                  </p>
+                )}
               </div>
             </label>
 

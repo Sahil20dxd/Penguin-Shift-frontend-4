@@ -26,19 +26,91 @@ export async function apiJson(path: string, options: RequestInit = {}) {
   })
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error('HTTP ' + res.status + ': ' + (text || res.statusText))
+    let errorMessage = res.statusText || 'Request failed'
+    
+    // Try to parse error response for better error messages
+    try {
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        const errorData = await res.json()
+        errorMessage = errorData.message || errorData.error || errorMessage
+      } else {
+        const text = await res.text()
+        if (text) {
+          try {
+            const parsed = JSON.parse(text)
+            errorMessage = parsed.message || parsed.error || errorMessage
+          } catch {
+            // If not JSON, use the text if it's meaningful
+            if (text.length < 200) {
+              errorMessage = text
+            }
+          }
+        }
+      }
+    } catch {
+      // If parsing fails, use status-based messages
+      if (res.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.'
+      } else if (res.status === 403) {
+        errorMessage = 'Access denied. You do not have permission to perform this action.'
+      } else if (res.status === 404) {
+        errorMessage = 'Resource not found.'
+      } else if (res.status >= 500) {
+        errorMessage = 'Server error. Please try again later.'
+      }
+    }
+    
+    const error = new Error(errorMessage) as any
+    error.status = res.status
+    error.statusText = res.statusText
+    throw error
   }
 
+  // Handle successful responses (200-299)
   const ct = res.headers.get('content-type') || ''
-  if (ct.includes('application/json')) return res.json()
+  const contentLength = res.headers.get('content-length')
+  
+  // If content-length is 0 or response is empty, return empty object for success
+  if (contentLength === '0' || (!ct.includes('application/json') && !ct.includes('text') && !ct)) {
+    // For successful requests with no body, return empty object
+    return {}
+  }
+  
+  if (ct.includes('application/json')) {
+    try {
+      const jsonData = await res.json()
+      return jsonData
+    } catch {
+      // If JSON parsing fails but status is OK, return empty object
+      if (res.ok) {
+        return {}
+      }
+      throw new Error('Failed to parse JSON response')
+    }
+  }
 
   const text = await res.text()
-  try {
-    return JSON.parse(text)
-  } catch {
-    throw new Error(text || 'Non-JSON response from server')
+  // If there's no text content, return empty object for success responses
+  if (!text && res.ok) {
+    return {}
   }
+  
+  // Try to parse as JSON if there's text
+  if (text) {
+    try {
+      return JSON.parse(text)
+    } catch {
+      // For successful responses with non-JSON content, return empty object
+      if (res.ok) {
+        return {}
+      }
+      throw new Error(text || 'Non-JSON response from server')
+    }
+  }
+  
+  // Default: return empty object for successful empty responses
+  return {}
 }
 
 // Generic JSON fetch for PUBLIC endpoints (no auth required)

@@ -39,6 +39,9 @@ export default function AuthRouter() {
               name: data.username || data.name || "User",
               email: data.email,
               username: data.username || data.name || "user",
+              role: data.role || "USER",
+              registeredWithMaster: data.registeredWithMaster || false,
+              isRestricted: data.isRestricted || false,
             },
             undefined
           );

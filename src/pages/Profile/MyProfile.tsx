@@ -1,6 +1,6 @@
 // src/pages/Profile/MyProfile.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Repeat, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -10,6 +10,10 @@ import ProfileTabs from "@/components/profile/ProfileTabs";
 import MyHistory from "@/components/profile/MyHistory";
 import MySharing from "@/components/profile/MySharing";
 import AccountSettings from "@/components/profile/AccountSettings";
+import AdminModeration from "@/components/profile/AdminModeration";
+import ActiveUsers from "@/components/profile/ActiveUsers";
+import AllPublicPlaylists from "@/components/profile/AllPublicPlaylists";
+import MasterAdminPanel from "@/components/profile/MasterAdminPanel";
 import ProfileQuote from "@/components/profile/ProfileQuote";
 import { useAuth } from "@/context/useAuth";
 import { Navigate } from "react-router-dom";
@@ -24,11 +28,33 @@ import {
 
 export default function MyProfile() {
   // inside component
-  const { user } = useAuth();
+  const { user, authFetch } = useAuth();
   usePageTitle('My Profile');
   if (!user) return <Navigate to="/auth?mode=login" replace />;
-  const [activeTab, setActiveTab] = useState("history");
+  
+  // Set initial tab based on user role
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'CURATOR' 
+    || user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_CURATOR';
+  const [activeTab, setActiveTab] = useState(isAdmin ? "settings" : "history");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMaster, setIsMaster] = useState(false);
+
+  // Check if user is master account
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getApiBase } = await import('@/utils/apiConfig');
+        const API_BASE = getApiBase();
+        const res = await authFetch(`${API_BASE}/api/master/is-master`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsMaster(data.isMaster || false);
+        }
+      } catch {
+        // Ignore errors
+      }
+    })();
+  }, [authFetch]);
 
   const getTabTitle = () => {
     switch (activeTab) {
@@ -38,13 +64,24 @@ export default function MyProfile() {
         return "My Sharing";
       case "settings":
         return "Account Settings";
+      case "all-playlists":
+        return "All Public Playlists";
+      case "admin":
+        return "Moderation Dashboard";
+      case "users":
+        return "Active Users";
       default:
         return "My History";
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50"
+    >
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -90,13 +127,15 @@ export default function MyProfile() {
             </Sheet>
           </div>
 
-          {/* Desktop New Shift Button */}
-          <Link to="/shift/select" className="hidden md:block">
-            <Button className="bg-black hover:bg-gray-800 text-white px-8 py-6 rounded-xl text-lg font-semibold shadow-lg">
-              <Repeat className="w-5 h-5 mr-2" />
-              New Shift
-            </Button>
-          </Link>
+          {/* Desktop New Shift Button - Only show for regular users */}
+          {user?.role !== 'ADMIN' && user?.role !== 'CURATOR' && (
+            <Link to="/shift/select" className="hidden md:block">
+              <Button className="bg-black hover:bg-gray-800 text-white px-8 py-6 rounded-xl text-lg font-semibold shadow-lg">
+                <Repeat className="w-5 h-5 mr-2" />
+                New Shift
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Desktop Tab Navigation */}
@@ -119,14 +158,22 @@ export default function MyProfile() {
           transition={{ duration: 0.3 }}
           className="mb-16"
         >
-          {activeTab === "history" && <MyHistory />}
-          {activeTab === "sharing" && <MySharing />}
-          {activeTab === "settings" && <AccountSettings />}
+                 {activeTab === "history" && user?.role !== 'ADMIN' && user?.role !== 'CURATOR' && <MyHistory />}
+                 {activeTab === "sharing" && user?.role !== 'ADMIN' && user?.role !== 'CURATOR' && <MySharing />}
+                 {activeTab === "settings" && (
+                   <>
+                     {isMaster && <MasterAdminPanel />}
+                     <AccountSettings />
+                   </>
+                 )}
+                 {activeTab === "all-playlists" && <AllPublicPlaylists />}
+                 {activeTab === "admin" && <AdminModeration />}
+                 {activeTab === "users" && <ActiveUsers />}
         </motion.div>
 
         {/* Inspirational Quote Section */}
         <ProfileQuote />
       </div>
-    </div>
+    </motion.div>
   );
 }

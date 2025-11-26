@@ -12,6 +12,8 @@ import {
   Download,
   FileText,
   Share2,
+  Flag,
+  Shield,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -247,7 +249,7 @@ export default function MySharing() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900">
                               {transfer.destinationPlaylistName}
                             </p>
@@ -257,7 +259,29 @@ export default function MySharing() {
                                 Public
                               </Badge>
                             )}
+                            {transfer.isFlagged && (
+                              <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                                <Flag className="w-3 h-3 mr-1" />
+                                Flagged
+                              </Badge>
+                            )}
+                            {transfer.isFlagged && transfer.moderationStatus === 'PENDING' && (
+                              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                                <Shield className="w-3 h-3 mr-1" />
+                                Under Review
+                              </Badge>
+                            )}
                           </div>
+                          {transfer.isFlagged && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                              <p className="text-xs text-red-800 font-medium mb-1">
+                                ⚠️ This playlist has been flagged and is under review by administrators.
+                              </p>
+                              <p className="text-xs text-red-700">
+                                Status: {transfer.moderationStatus || 'PENDING'} - Your playlist will be reviewed shortly.
+                              </p>
+                            </div>
+                          )}
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <span>{getPlatformIcon(transfer.sourcePlatform)} {transfer.sourcePlatform}</span>
                             <span>→</span>
@@ -357,15 +381,40 @@ export default function MySharing() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-gray-900 truncate">
                         {transfer.destinationPlaylistName}
                       </h3>
                       {transfer.isPublic && (
-                        <Globe className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                          <Globe className="w-3 h-3 mr-1" />
+                          Public
+                        </Badge>
+                      )}
+                      {transfer.isFlagged && (
+                        <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                          <Flag className="w-3 h-3 mr-1" />
+                          Flagged
+                        </Badge>
+                      )}
+                      {transfer.isFlagged && transfer.moderationStatus === 'PENDING' && (
+                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                          <Shield className="w-3 h-3 mr-1" />
+                          Under Review
+                        </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500">
+                    {transfer.isFlagged && (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-xs text-red-800 font-medium mb-1">
+                          ⚠️ This playlist has been flagged and is under review by administrators.
+                        </p>
+                        <p className="text-xs text-red-700">
+                          Status: {transfer.moderationStatus || 'PENDING'} - Your playlist will be reviewed shortly.
+                        </p>
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-500 mt-1">
                       {transfer.matchedTracks}/{transfer.totalTracks} tracks matched
                     </p>
                     <p className="text-xs text-gray-400">

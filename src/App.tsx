@@ -3,10 +3,12 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminBlockedRoute from "./components/AdminBlockedRoute";
 import { useToast } from "@/hooks/useToast";
 import * as RadixToast from "@radix-ui/react-toast";
 import { ShiftProvider } from "@/components/shift/ShiftContext";
 import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 // Lazy load all pages for code splitting
 const Landing = lazy(() => import("./pages/LandingPage/LandingPage"));
@@ -25,11 +27,36 @@ const TransferResults = lazy(() => import("./pages/Shift/TransferResults"));
 const PublicPlaylistDestination = lazy(() => import("./pages/PublicPlaylistDestination"));
 const PublicPlaylistSelectDestination = lazy(() => import("./pages/PublicPlaylistSelectDestination"));
 
-// Loading fallback component
+// Enhanced loading fallback component with animation
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-  </div>
+  <motion.div 
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50"
+  >
+    <motion.div
+      animate={{ 
+        rotate: 360,
+        scale: [1, 1.1, 1]
+      }}
+      transition={{ 
+        rotate: { duration: 1, repeat: Infinity, ease: "linear" },
+        scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+      }}
+      className="mb-4"
+    >
+      <Loader2 className="w-12 h-12 text-purple-600" />
+    </motion.div>
+    <motion.p
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.2 }}
+      className="text-gray-600 font-medium"
+    >
+      Loading...
+    </motion.p>
+  </motion.div>
 );
 
 export default function App() {
@@ -110,45 +137,45 @@ export default function App() {
               }
             />
 
-            {/* Shift flow */}
+            {/* Shift flow - Block admins from accessing */}
             <Route
               path="/shift/select"
               element={
-                <ProtectedRoute>
+                <AdminBlockedRoute>
                   <Layout currentPageName="Shift">
                     <SelectPlaylist />
                   </Layout>
-                </ProtectedRoute>
+                </AdminBlockedRoute>
               }
             />
             <Route
               path="/shift/destination"
               element={
-                <ProtectedRoute>
+                <AdminBlockedRoute>
                   <Layout currentPageName="Shift">
                     <SelectDestination />
                   </Layout>
-                </ProtectedRoute>
+                </AdminBlockedRoute>
               }
             />
             <Route
               path="/shift/public-destination"
               element={
-                <ProtectedRoute>
+                <AdminBlockedRoute>
                   <Layout currentPageName="Shift">
                     <PublicPlaylistDestination />
                   </Layout>
-                </ProtectedRoute>
+                </AdminBlockedRoute>
               }
             />
             <Route
               path="/shift/public-destination-select"
               element={
-                <ProtectedRoute>
+                <AdminBlockedRoute>
                   <Layout currentPageName="Shift">
                     <PublicPlaylistSelectDestination />
                   </Layout>
-                </ProtectedRoute>
+                </AdminBlockedRoute>
               }
             />
             <Route
@@ -162,11 +189,11 @@ export default function App() {
             <Route
               path="/shift/results"
               element={
-                <ProtectedRoute>
+                <AdminBlockedRoute>
                   <Layout currentPageName="Shift">
                     <TransferResults />
                   </Layout>
-                </ProtectedRoute>
+                </AdminBlockedRoute>
               }
             />
           </Routes>
