@@ -296,9 +296,13 @@ export default function MyHistory() {
           {!loading && !error && transfers.length > 0 && (
             <div className="md:hidden divide-y divide-gray-100">
               {transfers.map((transfer) => (
-                <div
+                <motion.div
                   key={transfer.id}
-                  className="flex items-center p-4 hover:bg-gray-50 gap-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center p-4 active:bg-gray-100 hover:bg-gray-50 gap-3 transition-colors duration-150"
                 >
                   {/* Platform Icon */}
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-md flex-shrink-0 flex items-center justify-center text-white text-xl">
@@ -368,7 +372,7 @@ export default function MyHistory() {
                       </Button>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}

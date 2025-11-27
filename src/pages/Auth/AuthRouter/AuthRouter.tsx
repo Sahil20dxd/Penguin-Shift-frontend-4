@@ -14,7 +14,8 @@ import { useAuth } from "@/context/useAuth";
 import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { getApiBase } from "@/utils/apiConfig";
 
-const API_BASE = getApiBase();
+// Don't call getApiBase() at module load time - it needs window.location
+// Instead, call it at runtime when needed
 
 export default function AuthRouter() {
   const { isAuthenticated, loading, login } = useAuth();
@@ -29,6 +30,7 @@ export default function AuthRouter() {
     // Helper to refresh session from cookies and land on profile
     const finishAndGoProfile = async () => {
       try {
+        const API_BASE = getApiBase(); // Get API base at runtime
         const res = await fetch(`${API_BASE}/auth/me`, {
           credentials: "include",
         });

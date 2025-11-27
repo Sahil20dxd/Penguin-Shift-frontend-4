@@ -9,7 +9,8 @@ import React, {
 
 import { getApiBase } from "@/utils/apiConfig";
 
-const API_BASE = getApiBase();
+// Don't call getApiBase() at module load time - it needs window.location
+// Instead, call it at runtime when needed
 
 export interface User {
   name: string;
@@ -76,31 +77,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // If we get 401 on a state-changing operation, it might be a CSRF token issue
-      // Make a GET request first to initialize the CSRF token, then retry the original request
+      // The first request (even if it fails) should set the CSRF token cookie
+      // Wait and retry with the token that should now be available
       if (!res.ok && res.status === 401 && isStateChanging) {
-        // First, make a GET request to initialize the CSRF token cookie
-        // Use a public endpoint that doesn't require authentication
-        const { getApiBase } = await import("@/utils/apiConfig");
-        const API_BASE = getApiBase();
-        try {
-          await fetch(`${API_BASE}/api/public-playlists?limit=1`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-        } catch {
-          // If GET fails, continue anyway - the original request might have set the cookie
+        // Wait a bit longer to ensure the CSRF token cookie from the first request is processed
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Try to get the CSRF token - it should be available from the first request's response
+        const { getCsrfToken } = await import("@/utils/csrf");
+        let csrfToken = getCsrfToken();
+        
+        // If still no token, make a GET request to trigger CSRF token generation
+        if (!csrfToken) {
+          try {
+            const { getApiBase } = await import("@/utils/apiConfig");
+            const API_BASE = getApiBase();
+            // Make a GET request to an authenticated endpoint to get CSRF token
+            await fetch(`${API_BASE}/auth/me`, {
+              method: 'GET',
+              credentials: 'include',
+            });
+            // Wait a bit more for the cookie to be set
+            await new Promise(resolve => setTimeout(resolve, 200));
+            csrfToken = getCsrfToken();
+          } catch {
+            // If GET fails, continue anyway
+          }
         }
         
-        // Wait a moment to ensure the CSRF token cookie is set
-        await new Promise(resolve => setTimeout(resolve, 150));
-        
-        // Retry with fresh CSRF token (should be available now)
-        const retryCsrfHeaders = addCsrfToken(Object.fromEntries(headers.entries()));
-        const retryFinalHeaders = new Headers(retryCsrfHeaders);
+        // Retry with CSRF token (if available)
+        const retryHeaders = new Headers(headers);
+        if (csrfToken) {
+          retryHeaders.set('X-CSRF-TOKEN', csrfToken);
+        }
 
         res = await fetch(input, {
           ...init,
-          headers: retryFinalHeaders,
+          headers: retryHeaders,
           credentials: "include",
           body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
         });
@@ -127,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // No localStorage token access - tokens are stored in HTTP-only cookies by backend
     (async () => {
       try {
+        const API_BASE = getApiBase(); // Get API base at runtime
         const res = await fetch(`${API_BASE}/auth/me`, { 
           credentials: "include" // Uses HTTP-only cookies
         });
@@ -192,6 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Note: authToken is no longer stored in localStorage (security improvement)
     // Backend will clear the HTTP-only cookie on logout
     try {
+      const API_BASE = getApiBase(); // Get API base at runtime
       const { addCsrfToken } = await import("@/utils/csrf");
       const headers = addCsrfToken({ "Content-Type": "application/json" });
       fetch(`${API_BASE}/auth/logout`, { 
@@ -201,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).catch(() => {});
     } catch {
       // If CSRF fails, still try to logout
+      const API_BASE = getApiBase(); // Get API base at runtime
       fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
     }
   };

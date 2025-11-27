@@ -16,7 +16,8 @@ import {
 } from "@/utils/security/turnstile";
 import { getApiBase } from "@/utils/apiConfig";
 
-const API_BASE = getApiBase();
+// Don't call getApiBase() at module load time - it needs window.location
+// Instead, call it at runtime when needed
 const TURNSTILE_SITE_KEY =
   (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || "";
 
@@ -114,6 +115,7 @@ export default function LoginPage() {
       // Add CSRF token for login request
       const { addCsrfToken } = await import("@/utils/csrf");
       const headers = addCsrfToken({ "Content-Type": "application/json" });
+      const API_BASE = getApiBase(); // Get API base at runtime
       
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
@@ -134,6 +136,7 @@ export default function LoginPage() {
         // Fetch complete user data from /auth/me using cookies (credentials: "include")
         // This ensures we have the most up-to-date user information including role
         try {
+          const API_BASE = getApiBase(); // Get API base at runtime
           const meRes = await fetch(`${API_BASE}/auth/me`, {
             credentials: "include", // Uses HTTP-only cookies automatically
           });
@@ -245,20 +248,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
       <form
         onSubmit={handleLogin}
-        className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg"
+        className="w-full max-w-md bg-white p-6 md:p-8 rounded-lg shadow-lg"
       >
-        <h1 className="text-2xl font-bold text-center mb-1 text-gray-900">
+        <h1 className="text-2xl md:text-3xl font-bold text-center mb-1 text-gray-900">
           Login
         </h1>
-        <p className="text-sm text-gray-600 text-center mb-6">
+        <p className="text-sm md:text-base text-gray-600 text-center mb-6">
           Access your account and keep your playlists in sync.
         </p>
 
         {/* Identifier */}
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm md:text-base font-medium mb-2">
           Email or Username
         </label>
         <input
@@ -267,27 +270,30 @@ export default function LoginPage() {
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           placeholder="Enter your email or username"
-          className="mb-4 w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 outline-none"
+          className="mb-4 w-full px-4 py-3 md:py-3 text-base border rounded-md focus:ring-2 focus:ring-purple-500 outline-none transition-all duration-200 touch-manipulation"
+          autoComplete="username"
+          inputMode="email"
         />
 
         {/* Password */}
-        <label className="block text-sm font-medium mb-1">Password</label>
+        <label className="block text-sm md:text-base font-medium mb-2">Password</label>
         <input
           type="password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
-          className="mb-4 w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-purple-500 outline-none"
+          className="mb-4 w-full px-4 py-3 md:py-3 text-base border rounded-md focus:ring-2 focus:ring-purple-500 outline-none transition-all duration-200 touch-manipulation"
+          autoComplete="current-password"
         />
 
         {/* Remember me */}
-        <label className="inline-flex items-center mb-4">
+        <label className="inline-flex items-center mb-4 text-sm md:text-base">
           <input
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="mr-2"
+            className="mr-2 w-4 h-4"
           />
           Remember me
         </label>
@@ -298,7 +304,7 @@ export default function LoginPage() {
         {/* Login */}
         <Button
           type="submit"
-          className="w-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white hover:from-purple-700 hover:to-indigo-600"
+          className="w-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white hover:from-purple-700 hover:to-indigo-600 py-3 md:py-6 text-base md:text-lg font-semibold"
         >
           Login
         </Button>
@@ -311,16 +317,17 @@ export default function LoginPage() {
             document.cookie =
               "PS_OAUTH_INTENT=login; Path=/; Max-Age=300; SameSite=Lax";
             // Pass intent via query parameter for cross-domain (Railway)
+            const API_BASE = getApiBase(); // Get API base at runtime
             window.location.assign(`${API_BASE}/oauth2/authorization/google?intent=login`);
           }}
-          className="mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-2 rounded-md hover:bg-gray-50"
+          className="mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-3 md:py-6 text-base md:text-lg rounded-md hover:bg-gray-50"
         >
           Login with Google
         </Button>
 
         {/* Links */}
-        <div className="mt-4 text-sm text-center text-gray-600">
-          Don’t have an account?{" "}
+        <div className="mt-4 text-sm md:text-base text-center text-gray-600">
+          Don't have an account?{" "}
           <Link
             to="/auth?mode=register"
             className="text-blue-600 hover:underline"

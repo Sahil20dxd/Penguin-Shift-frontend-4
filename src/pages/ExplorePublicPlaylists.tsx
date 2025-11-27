@@ -228,20 +228,20 @@ export default function ExplorePublicPlaylists() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6"
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6"
     >
       <div className="max-w-7xl mx-auto">
         {toastMessage && (
-          <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2">
+          <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-4 md:px-6 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2 text-sm md:text-base max-w-[90vw]">
             {toastMessage}
           </div>
         )}
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
             Explore Public Playlists
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">
             Discover and share playlists from the PenguinShift community
           </p>
         </div>
@@ -293,7 +293,7 @@ export default function ExplorePublicPlaylists() {
                 }
               }
             }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
           >
             {Array(8)
               .fill(0)
@@ -306,9 +306,9 @@ export default function ExplorePublicPlaylists() {
                   }}
                   className="space-y-3"
                 >
-                  <Skeleton className="aspect-square rounded-xl animate-pulse" />
-                  <Skeleton className="h-5 w-3/4 animate-pulse" />
-                  <Skeleton className="h-4 w-1/2 animate-pulse" />
+                  <Skeleton className="aspect-square rounded-xl animate-pulse bg-gradient-to-br from-gray-200 to-gray-300" />
+                  <Skeleton className="h-5 w-3/4 animate-pulse bg-gradient-to-r from-gray-200 to-gray-300" />
+                  <Skeleton className="h-4 w-1/2 animate-pulse bg-gradient-to-r from-gray-200 to-gray-300" />
                 </motion.div>
               ))}
           </motion.div>
@@ -367,7 +367,7 @@ export default function ExplorePublicPlaylists() {
                   }
                 }
               }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
             >
               <AnimatePresence mode="popLayout">
                 {paginatedPlaylists.map((playlist, index) => (

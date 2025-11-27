@@ -369,19 +369,19 @@ export default function SelectPlaylist() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6"
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6"
     >
       <div className="max-w-4xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6 md:mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
             Select Your Playlists
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">
             Choose playlists to transfer from your account
           </p>
         </motion.div>
@@ -403,21 +403,21 @@ export default function SelectPlaylist() {
           )}
         </AnimatePresence>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Source Platform</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
+          <h2 className="text-base md:text-lg font-semibold mb-4">Source Platform</h2>
 
-          <div className="flex gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6">
             <Button
               variant={localPlatform === "spotify" ? "default" : "outline"}
               onClick={() => void handlePlatformSwitch("spotify")}
-              className="flex-1"
+              className="flex-1 py-3 md:py-6 text-base md:text-lg"
             >
               Spotify
             </Button>
             <Button
               variant={localPlatform === "youtube" ? "default" : "outline"}
               onClick={() => void handlePlatformSwitch("youtube")}
-              className="flex-1"
+              className="flex-1 py-3 md:py-6 text-base md:text-lg"
             >
               YouTube Music
             </Button>
@@ -448,57 +448,69 @@ export default function SelectPlaylist() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200 flex-1 sm:flex-initial"
+                >
                   <CheckCircle2
-                    className="w-5 h-5 text-green-600"
+                    className="w-5 h-5 text-green-600 flex-shrink-0"
                     aria-hidden="true"
                   />
-                  <span className="text-green-700 font-medium">
+                  <span className="text-sm md:text-base text-green-700 font-medium">
                     Connected to{" "}
                     {localPlatform === "spotify" ? "Spotify" : "YouTube Music"}
                   </span>
-                </div>
+                </motion.div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     onClick={() => void handleManualRefresh()}
                     disabled={isLoadingPlaylists}
                     title="Refresh playlists"
+                    className="flex-1 sm:flex-initial py-3 md:py-6 min-h-[44px] md:min-h-0"
                   >
                     <RefreshCw
                       className={
-                        "w-4 h-4 mr-2 " +
+                        "w-4 h-4 md:w-5 md:h-5 mr-2 " +
                         (isLoadingPlaylists ? "animate-spin" : "")
                       }
                     />
-                    Refresh
+                    <span className="text-sm md:text-base">Refresh</span>
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => void handleReconnect()}
                     title="Reconnect account"
+                    className="flex-1 sm:flex-initial py-3 md:py-6 min-h-[44px] md:min-h-0"
                   >
-                    <PlugZap className="w-4 h-4 mr-2" />
-                    Reconnect
+                    <PlugZap className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                    <span className="text-sm md:text-base">Reconnect</span>
                   </Button>
                 </div>
               </div>
 
-              <div className="relative mb-4">
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="relative mb-4"
+              >
                 <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
                   aria-hidden="true"
                 />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search your playlists..."
-                  className="pl-10"
+                  className="pl-10 h-12 md:h-10 text-base md:text-sm"
                   aria-label="Search your playlists"
                 />
-              </div>
+              </motion.div>
 
               <div className="flex items-center gap-2 mb-3">
                 <Checkbox
@@ -521,29 +533,42 @@ export default function SelectPlaylist() {
               </div>
 
               {isLoadingPlaylists ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                  Loading playlists...
-                </div>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-8 text-gray-500"
+                >
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-purple-600" />
+                  <p className="text-sm md:text-base">Loading playlists...</p>
+                </motion.div>
               ) : filtered.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-2">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-center py-8"
+                >
+                  <p className="text-sm md:text-base text-gray-500 mb-2">
                     {playlists.length === 0
                       ? "No playlists found"
                       : "No matching playlists"}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs md:text-sm text-gray-400">
                     Tip: click Refresh if you just created a playlist.
                   </p>
-                </div>
+                </motion.div>
               ) : (
                 <div className="space-y-3">
-                  {filtered.map((pl) => {
+                  {filtered.map((pl, index) => {
                     const selected = selectedPlaylistIds.includes(pl.id);
                     return (
-                      <div
+                      <motion.div
                         key={pl.id}
-                        className="border-2 border-gray-200 rounded-lg overflow-hidden"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="border-2 border-gray-200 rounded-lg overflow-hidden active:border-purple-300 transition-colors duration-150"
                       >
                         <div
                           className={
@@ -608,14 +633,20 @@ export default function SelectPlaylist() {
                           </div>
                         </div>
                         {expandedPlaylist === pl.id && (
-                          <div className="p-4 bg-gray-50 border-t border-gray-200">
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="p-4 bg-gray-50 border-t border-gray-200"
+                          >
                             <p className="text-sm text-gray-600 italic">
                               Individual song selection coming soon. For now,
                               all songs will be transferred.
                             </p>
-                          </div>
+                          </motion.div>
                         )}
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>

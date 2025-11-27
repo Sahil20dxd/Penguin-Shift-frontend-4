@@ -18,7 +18,8 @@ import {
 } from '@/utils/security/turnstile'
 import { getApiBase } from '@/utils/apiConfig'
 
-const API_BASE = getApiBase()
+// Don't call getApiBase() at module load time - it needs window.location
+// Instead, call it at runtime when needed
 const TURNSTILE_SITE_KEY =
   (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || ''
 
@@ -178,6 +179,7 @@ export default function RegisterPage() {
       const { addCsrfToken } = await import('@/utils/csrf')
       const headers = addCsrfToken({ 'Content-Type': 'application/json' })
       
+      const API_BASE = getApiBase(); // Get API base at runtime
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers,
@@ -414,6 +416,7 @@ export default function RegisterPage() {
             document.cookie =
               'PS_OAUTH_INTENT=register; Path=/; Max-Age=300; SameSite=Lax'
             // Pass intent via query parameter for cross-domain (Railway)
+            const API_BASE = getApiBase(); // Get API base at runtime
             window.location.href = `${API_BASE}/oauth2/authorization/google?intent=register`
           }}
           className='mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-2 rounded-md hover:bg-gray-50'

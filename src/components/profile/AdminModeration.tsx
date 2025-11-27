@@ -225,12 +225,12 @@ export default function AdminModeration() {
       )}
 
       <Card className='bg-white shadow-lg rounded-2xl overflow-hidden'>
-        <CardHeader className='border-b border-gray-100 p-6'>
-          <div className='flex items-center justify-between'>
-            <CardTitle className='text-xl font-semibold text-gray-900'>All Playlists</CardTitle>
-            <div className='flex items-center gap-3'>
+        <CardHeader className='border-b border-gray-100 p-4 md:p-6'>
+          <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
+            <CardTitle className='text-lg md:text-xl font-semibold text-gray-900'>All Playlists</CardTitle>
+            <div className='flex items-center gap-2 md:gap-3'>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <SelectTrigger className='w-40 bg-white border border-gray-300 text-gray-900'>
+                <SelectTrigger className='w-full md:w-40 bg-white border border-gray-300 text-gray-900'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className='bg-white border border-gray-200 shadow-lg'>
@@ -245,6 +245,7 @@ export default function AdminModeration() {
                 size='icon'
                 onClick={fetchFlaggedPlaylists}
                 disabled={loading}
+                className='flex-shrink-0'
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
@@ -264,120 +265,236 @@ export default function AdminModeration() {
               </p>
             </div>
           ) : (
-            <div className='overflow-x-auto'>
-              <Table>
-                <TableHeader>
-                  <TableRow className='bg-gray-50'>
-                    <TableHead className='font-semibold'>Playlist Name</TableHead>
-                    <TableHead className='font-semibold'>Owner</TableHead>
-                    <TableHead className='font-semibold'>Platform</TableHead>
-                    <TableHead className='font-semibold'>Status</TableHead>
-                    <TableHead className='font-semibold'>Reports</TableHead>
-                    <TableHead className='font-semibold'>Last Flagged</TableHead>
-                    <TableHead className='font-semibold text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {playlists.map((playlist) => (
-                    <TableRow key={playlist.id} className='hover:bg-gray-50'>
-                      <TableCell className='font-medium'>{playlist.playlistName}</TableCell>
-                      <TableCell>
-                        <div className='flex flex-col'>
-                          <span className='text-sm font-medium'>{playlist.ownerUsername}</span>
-                          <span className='text-xs text-gray-500'>{playlist.ownerEmail}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getPlatformBadge(playlist.platform)}</TableCell>
-                      <TableCell>{getStatusBadge(playlist.status)}</TableCell>
-                      <TableCell>
-                        <Badge variant='outline' className='bg-orange-50 text-orange-700'>
-                          {playlist.reportCount} {playlist.reportCount === 1 ? 'report' : 'reports'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className='text-sm text-gray-600'>
-                        {new Date(playlist.lastFlaggedAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <div className='flex items-center justify-end gap-2'>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={() => handleViewDetails(playlist)}
-                            className='h-8'
-                            title="View playlist details and reports"
-                          >
-                            <Eye className='w-4 h-4' />
-                          </Button>
-                          {playlist.status === 'PENDING' && (
-                            <>
+            <>
+              {/* Desktop Table View */}
+              <div className='hidden md:block overflow-x-auto'>
+                <Table>
+                  <TableHeader>
+                    <TableRow className='bg-gray-50'>
+                      <TableHead className='font-semibold'>Playlist Name</TableHead>
+                      <TableHead className='font-semibold'>Owner</TableHead>
+                      <TableHead className='font-semibold'>Platform</TableHead>
+                      <TableHead className='font-semibold'>Status</TableHead>
+                      <TableHead className='font-semibold'>Reports</TableHead>
+                      <TableHead className='font-semibold'>Last Flagged</TableHead>
+                      <TableHead className='font-semibold text-right'>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {playlists.map((playlist) => (
+                      <TableRow key={playlist.id} className='hover:bg-gray-50'>
+                        <TableCell className='font-medium'>{playlist.playlistName}</TableCell>
+                        <TableCell>
+                          <div className='flex flex-col'>
+                            <span className='text-sm font-medium'>{playlist.ownerUsername}</span>
+                            <span className='text-xs text-gray-500'>{playlist.ownerEmail}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getPlatformBadge(playlist.platform)}</TableCell>
+                        <TableCell>{getStatusBadge(playlist.status)}</TableCell>
+                        <TableCell>
+                          <Badge variant='outline' className='bg-orange-50 text-orange-700'>
+                            {playlist.reportCount} {playlist.reportCount === 1 ? 'report' : 'reports'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className='text-sm text-gray-600'>
+                          {new Date(playlist.lastFlaggedAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <div className='flex items-center justify-end gap-2'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => handleViewDetails(playlist)}
+                              className='h-8'
+                              title="View playlist details and reports"
+                            >
+                              <Eye className='w-4 h-4' />
+                            </Button>
+                            {playlist.status === 'PENDING' && (
+                              <>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={() => handleApprove(playlist)}
+                                  disabled={actionLoading === playlist.id}
+                                  className='h-8 text-green-600 hover:text-green-700 hover:bg-green-50'
+                                  title="Approve playlist and clear flags - makes it visible in explore section"
+                                >
+                                  {actionLoading === playlist.id ? (
+                                    <Loader2 className='w-4 h-4 animate-spin' />
+                                  ) : (
+                                    <CheckCircle className='w-4 h-4' />
+                                  )}
+                                </Button>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={() => handleHide(playlist)}
+                                  disabled={actionLoading === playlist.id}
+                                  className='h-8 text-red-600 hover:text-red-700 hover:bg-red-50'
+                                  title="Hide playlist from explore section - owner will be notified"
+                                >
+                                  {actionLoading === playlist.id ? (
+                                    <Loader2 className='w-4 h-4 animate-spin' />
+                                  ) : (
+                                    <EyeOff className='w-4 h-4' />
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                            {!playlist.isUserRestricted ? (
                               <Button
                                 variant='ghost'
                                 size='sm'
-                                onClick={() => handleApprove(playlist)}
+                                onClick={() => handleRestrictUser(playlist)}
+                                disabled={actionLoading === playlist.id}
+                                className='h-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50'
+                                title="Restrict this user from creating public playlists"
+                              >
+                                {actionLoading === playlist.id ? (
+                                  <Loader2 className='w-4 h-4 animate-spin' />
+                                ) : (
+                                  <Shield className='w-4 h-4' />
+                                )}
+                              </Button>
+                            ) : (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => handleUnrestrictUser(playlist)}
                                 disabled={actionLoading === playlist.id}
                                 className='h-8 text-green-600 hover:text-green-700 hover:bg-green-50'
-                                title="Approve playlist and clear flags - makes it visible in explore section"
+                                title="Remove restriction and allow user to create public playlists again"
                               >
                                 {actionLoading === playlist.id ? (
                                   <Loader2 className='w-4 h-4 animate-spin' />
                                 ) : (
-                                  <CheckCircle className='w-4 h-4' />
+                                  <ShieldOff className='w-4 h-4' />
                                 )}
                               </Button>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() => handleHide(playlist)}
-                                disabled={actionLoading === playlist.id}
-                                className='h-8 text-red-600 hover:text-red-700 hover:bg-red-50'
-                                title="Hide playlist from explore section - owner will be notified"
-                              >
-                                {actionLoading === playlist.id ? (
-                                  <Loader2 className='w-4 h-4 animate-spin' />
-                                ) : (
-                                  <EyeOff className='w-4 h-4' />
-                                )}
-                              </Button>
-                            </>
-                          )}
-                          {!playlist.isUserRestricted ? (
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => handleRestrictUser(playlist)}
-                              disabled={actionLoading === playlist.id}
-                              className='h-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50'
-                              title="Restrict this user from creating public playlists"
-                            >
-                              {actionLoading === playlist.id ? (
-                                <Loader2 className='w-4 h-4 animate-spin' />
-                              ) : (
-                                <Shield className='w-4 h-4' />
-                              )}
-                            </Button>
-                          ) : (
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => handleUnrestrictUser(playlist)}
-                              disabled={actionLoading === playlist.id}
-                              className='h-8 text-green-600 hover:text-green-700 hover:bg-green-50'
-                              title="Remove restriction and allow user to create public playlists again"
-                            >
-                              {actionLoading === playlist.id ? (
-                                <Loader2 className='w-4 h-4 animate-spin' />
-                              ) : (
-                                <ShieldOff className='w-4 h-4' />
-                              )}
-                            </Button>
-                          )}
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className='md:hidden divide-y divide-gray-100'>
+                {playlists.map((playlist) => (
+                  <div
+                    key={playlist.id}
+                    className='p-4 hover:bg-gray-50 space-y-3'
+                  >
+                    <div className='flex items-start justify-between gap-2'>
+                      <div className='flex-1 min-w-0'>
+                        <h3 className='font-semibold text-gray-900 truncate mb-1'>
+                          {playlist.playlistName}
+                        </h3>
+                        <div className='flex flex-wrap items-center gap-2 mb-2'>
+                          {getPlatformBadge(playlist.platform)}
+                          {getStatusBadge(playlist.status)}
+                          <Badge variant='outline' className='bg-orange-50 text-orange-700 text-xs'>
+                            {playlist.reportCount} {playlist.reportCount === 1 ? 'report' : 'reports'}
+                          </Badge>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                        <div className='space-y-1 text-sm text-gray-600'>
+                          <p>
+                            <span className='font-medium'>Owner:</span> {playlist.ownerUsername}
+                          </p>
+                          <p className='text-xs text-gray-500'>{playlist.ownerEmail}</p>
+                          <p>
+                            <span className='font-medium'>Last Flagged:</span>{' '}
+                            {new Date(playlist.lastFlaggedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className='flex items-center gap-2 pt-2 border-t border-gray-100'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => handleViewDetails(playlist)}
+                        className='flex-1 text-sm'
+                      >
+                        <Eye className='w-4 h-4 mr-2' />
+                        View Details
+                      </Button>
+                      {playlist.status === 'PENDING' && (
+                        <>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => handleApprove(playlist)}
+                            disabled={actionLoading === playlist.id}
+                            className='flex-1 text-sm text-green-600 border-green-200 hover:bg-green-50'
+                          >
+                            {actionLoading === playlist.id ? (
+                              <Loader2 className='w-4 h-4 animate-spin' />
+                            ) : (
+                              <>
+                                <CheckCircle className='w-4 h-4 mr-2' />
+                                Approve
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => handleHide(playlist)}
+                            disabled={actionLoading === playlist.id}
+                            className='flex-1 text-sm text-red-600 border-red-200 hover:bg-red-50'
+                          >
+                            {actionLoading === playlist.id ? (
+                              <Loader2 className='w-4 h-4 animate-spin' />
+                            ) : (
+                              <>
+                                <EyeOff className='w-4 h-4 mr-2' />
+                                Hide
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      )}
+                      {!playlist.isUserRestricted ? (
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => handleRestrictUser(playlist)}
+                          disabled={actionLoading === playlist.id}
+                          className='text-sm text-orange-600 border-orange-200 hover:bg-orange-50'
+                          title="Restrict user"
+                        >
+                          {actionLoading === playlist.id ? (
+                            <Loader2 className='w-4 h-4 animate-spin' />
+                          ) : (
+                            <Shield className='w-4 h-4' />
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => handleUnrestrictUser(playlist)}
+                          disabled={actionLoading === playlist.id}
+                          className='text-sm text-green-600 border-green-200 hover:bg-green-50'
+                          title="Unrestrict user"
+                        >
+                          {actionLoading === playlist.id ? (
+                            <Loader2 className='w-4 h-4 animate-spin' />
+                          ) : (
+                            <ShieldOff className='w-4 h-4' />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

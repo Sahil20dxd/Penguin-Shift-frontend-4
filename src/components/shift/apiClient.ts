@@ -37,33 +37,48 @@ export async function apiJson(path: string, options: RequestInit = {}) {
   })
 
   // If we get 401 on a state-changing operation, it might be a CSRF token issue
-  // Make a GET request first to initialize the CSRF token, then retry the original request
+  // The first request (even if it fails) should set the CSRF token cookie
+  // Wait and retry with the token that should now be available
   if (!res.ok && res.status === 401 && isStateChanging) {
-    // First, make a GET request to initialize the CSRF token cookie
-    // Use a public endpoint that doesn't require authentication
-    try {
-      await fetch(`${API_BASE}/api/public-playlists?limit=1`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-    } catch {
-      // If GET fails, continue anyway - the original request might have set the cookie
+    // Wait a bit longer to ensure the CSRF token cookie from the first request is processed
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // Try to get the CSRF token - it should be available from the first request's response
+    const { getCsrfToken } = await import('@/utils/csrf')
+    let csrfToken = getCsrfToken()
+    
+    // If still no token, make a GET request to trigger CSRF token generation
+    if (!csrfToken) {
+      try {
+        // Make a GET request to an authenticated endpoint to get CSRF token
+        // Use /auth/me which requires auth but is a GET request
+        await fetch(`${API_BASE}/auth/me`, {
+          method: 'GET',
+          credentials: 'include',
+        })
+        // Wait a bit more for the cookie to be set
+        await new Promise(resolve => setTimeout(resolve, 200))
+        csrfToken = getCsrfToken()
+      } catch {
+        // If GET fails, continue anyway
+      }
     }
     
-    // Wait a moment to ensure the CSRF token cookie is set
-    await new Promise(resolve => setTimeout(resolve, 150))
-    
-    // Retry with fresh CSRF token (should be available now)
-    const retryHeadersWithCsrf = addCsrfToken({
+    // Retry with CSRF token (if available)
+    const retryHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...(options.headers || {})
-    })
+      ...(options.headers as Record<string, string> || {})
+    }
+    
+    if (csrfToken) {
+      retryHeaders['X-CSRF-TOKEN'] = csrfToken
+    }
     
     res = await fetch(API_BASE + path, {
       ...options,
       credentials: 'include',
-      headers: retryHeadersWithCsrf
+      headers: retryHeaders
     })
   }
 

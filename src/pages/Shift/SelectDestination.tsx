@@ -333,12 +333,12 @@ export default function SelectDestination() {
     destinationPlatform === 'youtube' ? 'YouTube Music' : 'Spotify'
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6'>
+    <div className='min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6'>
       <div className='max-w-4xl mx-auto'>
-        <div className='mb-6 flex items-center justify-between'>
-          <h1 className='text-3xl font-bold text-gray-900'>Select Destination</h1>
+        <div className='mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <h1 className='text-2xl md:text-3xl font-bold text-gray-900'>Select Destination</h1>
           <Link to={createPageUrl('SelectPlaylist')}>
-            <Button variant='outline'>
+            <Button variant='outline' className='w-full sm:w-auto py-3 md:py-6'>
               <ArrowLeft className='w-4 h-4 mr-2' /> Back
             </Button>
           </Link>
@@ -353,8 +353,8 @@ export default function SelectDestination() {
           </div>
         )}
 
-        <div className='bg-white rounded-xl shadow-lg p-6 mb-6'>
-          <div className='mb-4 text-sm text-gray-600'>
+        <div className='bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6'>
+          <div className='mb-4 text-sm md:text-base text-gray-600'>
             {selectedPlaylistIds.length} playlist
             {selectedPlaylistIds.length !== 1 ? 's' : ''} selected for transfer
           </div>

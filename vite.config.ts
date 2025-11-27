@@ -11,8 +11,13 @@ const __dirname = _dirname(__filename)
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '127.0.0.1',
+    host: '0.0.0.0', // Allow access from all network interfaces
     port: 5173,
+    strictPort: false, // Try next available port if 5173 is taken
+    hmr: {
+      host: '0.0.0.0', // Allow HMR from network devices
+    },
+    cors: true, // Enable CORS for cross-origin requests
   },
   resolve: {
     alias: {

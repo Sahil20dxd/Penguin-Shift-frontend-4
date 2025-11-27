@@ -52,7 +52,9 @@ export function isUsernameAllowed(name: string): boolean {
   if (validationCache.size >= MAX_CACHE_SIZE) {
     // Remove oldest entry (simple FIFO)
     const firstKey = validationCache.keys().next().value;
-    validationCache.delete(firstKey);
+    if (firstKey !== undefined) {
+      validationCache.delete(firstKey);
+    }
   }
   validationCache.set(cacheKey, isAllowed);
   

@@ -263,17 +263,17 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                 <Menu className="w-6 h-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-white/95 backdrop-blur-xl">
+            <SheetContent side="right" className="bg-white/95 backdrop-blur-xl w-full sm:w-[400px]">
               <SheetHeader className="text-left">
                 <SheetTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-500 bg-clip-text text-transparent">
                   PenguinShift
                 </SheetTitle>
-                <SheetDescription>
+                <SheetDescription className="text-sm md:text-base">
                   Transfer your playlists between platforms
                 </SheetDescription>
               </SheetHeader>
 
-              <nav className="flex flex-col gap-2 mt-8">
+              <nav className="flex flex-col gap-2 mt-6 md:mt-8">
                 {filteredNavItems.map((item, index) => {
                   const isActive = location.pathname === item.url || 
                     (item.url === "/" && location.pathname === "/") ||
@@ -290,7 +290,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                         to={item.url}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={
-                          "relative flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 " +
+                          "relative flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 " +
                           (isActive
                             ? "text-purple-700"
                             : "text-gray-700")
@@ -323,27 +323,27 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                           setIsMobileMenuOpen(false);
                           navigate("/profile");
                         }}
-                        className="w-full flex items-center gap-2 text-gray-700 hover:text-purple-700"
+                        className="w-full flex items-center gap-2 text-gray-700 hover:text-purple-700 py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150"
                       >
                         <UserCircle className="w-5 h-5" />
-                        {user.name}
+                        <span className="text-base md:text-sm">{user.name}</span>
                       </Button>
                       <Button
                         variant="ghost"
-                        className="w-full text-gray-500 hover:text-red-600 mt-2"
+                        className="w-full text-gray-500 hover:text-red-600 mt-2 py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150"
                         onClick={() => {
                           logout();
                           setIsMobileMenuOpen(false);
                         }}
                       >
-                        Logout
+                        <span className="text-base md:text-sm">Logout</span>
                       </Button>
                     </>
                   ) : (
-                    <Link to="/auth?mode=register">
-                      <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white shadow-lg">
-                        <User className="w-4 h-4 mr-2" />
-                        Sign Up
+                    <Link to="/auth?mode=register" className="w-full">
+                      <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white shadow-lg py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150">
+                        <User className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                        <span className="text-base md:text-sm">Sign Up</span>
                       </Button>
                     </Link>
                   )}

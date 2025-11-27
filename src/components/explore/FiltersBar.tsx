@@ -55,7 +55,7 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className='bg-white rounded-xl border border-gray-200 p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-300'
+      className='bg-white rounded-xl border border-gray-200 p-4 md:p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-300'
     >
       <motion.div 
         className='flex items-center gap-2 mb-4'
@@ -67,15 +67,15 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
         >
           <Filter className='w-5 h-5 text-purple-600' aria-hidden='true' />
         </motion.div>
-        <h3 className='font-semibold text-gray-900'>Filters</h3>
+        <h3 className='text-base md:text-lg font-semibold text-gray-900'>Filters</h3>
       </motion.div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4'>
         {/* Platform filter */}
         <div className='relative'>
           <Label
             htmlFor='platform-filter'
-            className='text-sm font-medium mb-2 block'
+            className='text-sm md:text-base font-medium mb-2 block'
           >
             Platform
           </Label>
@@ -83,7 +83,7 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
             value={filters.platform || 'all'}
             onValueChange={value => onFilterChange('platform', value)}
           >
-            <SelectTrigger id='platform-filter' aria-label='Filter by platform'>
+            <SelectTrigger id='platform-filter' aria-label='Filter by platform' className='h-11 md:h-10'>
               <SelectValue placeholder='All Platforms' />
             </SelectTrigger>
             <SelectContent className='z-50 bg-white shadow-lg border border-gray-200'>
@@ -163,6 +163,7 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
             onChange={e => onFilterChange('minTracks', e.target.value)}
             placeholder='0'
             aria-label='Minimum track count'
+            className='h-11 md:h-10 text-base'
           />
         </div>
 
@@ -182,6 +183,7 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
             onChange={e => onFilterChange('maxTracks', e.target.value)}
             placeholder='∞'
             aria-label='Maximum track count'
+            className='h-11 md:h-10 text-base'
           />
         </div>
 
@@ -199,6 +201,7 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
             value={filters.createdFrom || ''}
             onChange={e => onFilterChange('createdFrom', e.target.value)}
             aria-label='Created date from'
+            className='h-11 md:h-10 text-base'
           />
         </div>
       </div>

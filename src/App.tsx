@@ -202,8 +202,8 @@ export default function App() {
       {/* Render the element (NOT <ToastUI />) */}
       {ToastUI}
 
-      {/* Radix viewport (where toasts are placed) */}
-      <RadixToast.Viewport className="fixed bottom-4 right-4 z-[100] w-[360px] max-w-[90vw] outline-none" />
+      {/* Radix viewport (where toasts are placed) - Mobile optimized */}
+      <RadixToast.Viewport className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[100] w-auto sm:w-[360px] max-w-[calc(100vw-2rem)] sm:max-w-[90vw] outline-none" />
     </RadixToast.Provider>
   );
 }

@@ -66,12 +66,12 @@ export default function PlaylistCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       whileHover={{ y: -8, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.96, y: -2 }}
       transition={{ 
-        duration: 0.3,
+        duration: 0.2,
         type: "spring",
-        stiffness: 300,
-        damping: 25
+        stiffness: 400,
+        damping: 20
       }}
     >
       <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-200 cursor-pointer group">
@@ -91,27 +91,34 @@ export default function PlaylistCard({
             </div>
           )}
 
-          {/* Hover overlay actions */}
+          {/* Hover overlay actions - Always visible on mobile for better UX */}
           <motion.div 
             initial={{ opacity: 0 }}
             whileHover={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-4 gap-2"
+            className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center pb-3 md:pb-4 gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div 
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => onViewDetails(playlist)}
-                className="bg-white/90 hover:bg-white"
+                className="bg-white/95 hover:bg-white shadow-lg text-sm md:text-xs py-2 md:py-1.5 px-3 md:px-2 min-h-[44px] md:min-h-0"
               >
-                <Eye className="w-4 h-4 mr-2" />
-                View Details
+                <Eye className="w-4 h-4 md:w-3 md:h-3 mr-1.5 md:mr-1" />
+                <span className="md:hidden">View</span>
               </Button>
             </motion.div>
 
             {playlist.isPublic && (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
                 <Button
                   size="sm"
                   variant="secondary"
@@ -119,10 +126,10 @@ export default function PlaylistCard({
                     e.stopPropagation();
                     onCopyLink(playlist);
                   }}
-                  className="bg-white/90 hover:bg-white"
+                  className="bg-white/95 hover:bg-white shadow-lg min-h-[44px] md:min-h-0 w-[44px] md:w-auto"
                   aria-label="Copy share link"
                 >
-                  <Link2 className="w-4 h-4" />
+                  <Link2 className="w-4 h-4 md:w-3 md:h-3" />
                 </Button>
               </motion.div>
             )}

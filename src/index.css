@@ -2,3 +2,50 @@
 @import "tailwindcss/preflight";
 @import "tailwindcss/theme";
 @import "tailwindcss/utilities";
+
+/* Mobile-optimized smooth scrolling */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Better touch targets for mobile */
+  button, a, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  * {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  /* Prevent text selection on mobile for better UX */
+  button, .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Allow text selection in inputs and textareas */
+  input, textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+}

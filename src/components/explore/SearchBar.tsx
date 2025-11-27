@@ -52,8 +52,9 @@ export default function SearchBar({
           if (e.key === "Enter") onChange(value);
         }}
         placeholder="Search public playlists…"
-        className="pl-10 pr-10 h-12 text-base border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
+        className="pl-10 pr-10 h-12 md:h-11 text-base md:text-sm border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
         aria-label="Search public playlists"
+        autoComplete="off"
       />
       <AnimatePresence>
         {value && (
@@ -68,10 +69,10 @@ export default function SearchBar({
               variant="ghost"
               size="icon"
               onClick={onClear}
-              className="h-8 w-8 hover:bg-purple-50"
+              className="h-10 w-10 md:h-8 md:w-8 hover:bg-purple-50 active:bg-purple-100 touch-manipulation"
               aria-label="Clear search"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5 md:w-4 md:h-4" />
             </Button>
           </motion.div>
         )}

@@ -210,20 +210,20 @@ export default function PlaylistDetailsDrawer({
       }}
     >
       <SheetContent
-        className="w-full sm:max-w-lg overflow-y-auto bg-white"
+        className="w-full sm:max-w-lg overflow-y-auto bg-white p-4 md:p-6"
         side="right"
       >
-        <SheetHeader className="space-y-4">
+        <SheetHeader className="space-y-3 md:space-y-4">
           <div className="flex items-start justify-between">
-            <SheetTitle className="text-2xl font-bold pr-8">
+            <SheetTitle className="text-xl md:text-2xl font-bold pr-4 md:pr-8">
               {playlist.title}
             </SheetTitle>
           </div>
-          <SheetDescription className="text-base">
+          <SheetDescription className="text-sm md:text-base">
             by {playlist.ownerName || "Anonymous"}
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-6 space-y-6">
+        <div className="mt-4 md:mt-6 space-y-4 md:space-y-6">
           {/* Cover image */}
           <div className="relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-purple-400 via-pink-300 to-blue-400">
             {playlist.coverUrl ? (
@@ -284,12 +284,12 @@ export default function PlaylistDetailsDrawer({
           )}
 
           {/* Action buttons */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={() => onAddToLibrary(playlist, tracks)}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600"
+              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 py-3 md:py-6 text-base md:text-lg font-semibold"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               Add to Library
             </Button>
 
@@ -298,8 +298,9 @@ export default function PlaylistDetailsDrawer({
                 variant="outline"
                 onClick={() => onCopyLink(playlist)}
                 aria-label="Copy share link"
+                className="py-3 md:py-6 min-h-[44px] md:min-h-0"
               >
-                <Link2 className="w-4 h-4" />
+                <Link2 className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
             )}
 
@@ -308,20 +309,20 @@ export default function PlaylistDetailsDrawer({
                 <Button 
                   variant="outline" 
                   aria-label="Report playlist"
-                  className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                  className="hover:bg-red-50 hover:border-red-200 hover:text-red-600 py-3 md:py-6 min-h-[44px] md:min-h-0"
                 >
-                  <Flag className="w-4 h-4" />
+                  <Flag className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-2 md:gap-3 mb-2">
                     <div className="p-2 bg-red-100 rounded-full">
-                      <Flag className="w-5 h-5 text-red-600" />
+                      <Flag className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
                     </div>
-                    <DialogTitle className="text-2xl">Report Playlist</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl">Report Playlist</DialogTitle>
                   </div>
-                  <DialogDescription className="text-base pt-2">
+                  <DialogDescription className="text-sm md:text-base pt-2">
                     We take reports seriously. Help us maintain a safe and respectful community by reporting content that violates our guidelines.
                   </DialogDescription>
                 </DialogHeader>
@@ -331,7 +332,7 @@ export default function PlaylistDetailsDrawer({
                       Why are you reporting this playlist? <span className="text-red-500">*</span>
                     </Label>
                     <Select value={reportReason} onValueChange={setReportReason}>
-                      <SelectTrigger id="report-reason" className="h-11">
+                      <SelectTrigger id="report-reason" className="h-12 md:h-11 text-base">
                         <SelectValue placeholder="Choose a reason..." />
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px] w-[var(--radix-select-trigger-width)] bg-white border border-gray-200 shadow-lg">
@@ -414,7 +415,7 @@ export default function PlaylistDetailsDrawer({
                    
                   </div>
                 </div>
-                <DialogFooter className="gap-2 sm:gap-0 pt-2">
+                <DialogFooter className="gap-2 sm:gap-0 pt-2 flex-col sm:flex-row">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -423,14 +424,14 @@ export default function PlaylistDetailsDrawer({
                       setReportDetails('');
                     }}
                     disabled={reporting}
-                    className="flex-1 sm:flex-initial"
+                    className="flex-1 sm:flex-initial w-full sm:w-auto py-3 md:py-6 text-base md:text-lg min-h-[44px]"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleReportPlaylist}
                     disabled={!reportReason || reporting}
-                    className={`flex-1 sm:flex-initial ${
+                    className={`flex-1 sm:flex-initial w-full sm:w-auto py-3 md:py-6 text-base md:text-lg min-h-[44px] ${
                       reportReason && !reporting
                         ? 'bg-red-600 hover:bg-red-700 text-white'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
