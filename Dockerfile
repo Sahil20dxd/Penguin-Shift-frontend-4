@@ -56,3 +56,9 @@ EXPOSE 8080
 # Use entrypoint script to handle PORT substitution
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
+# Health check to ensure nginx is running
+# Note: Railway uses its own health checks, but this helps with local Docker
+# The health endpoint is available at /health
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
+

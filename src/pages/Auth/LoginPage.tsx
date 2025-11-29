@@ -14,7 +14,7 @@ import {
   getTurnstileToken,
   resetTurnstile,
 } from "@/utils/security/turnstile";
-import { getApiBase } from "@/utils/apiConfig";
+import { getApiBase, setOAuthIntentCookie, getFrontendOrigin } from "@/utils/apiConfig";
 
 // Don't call getApiBase() at module load time - it needs window.location
 // Instead, call it at runtime when needed
@@ -81,6 +81,10 @@ export default function LoginPage() {
           "No account exists for that Google email. Please register first.",
           "warning"
         );
+        // Redirect to register page after showing the message
+        setTimeout(() => {
+          navigate("/auth?mode=register", { replace: true });
+        }, 1500);
       } else if (reason === "email-moved" && newEmail) {
         showToast(
           "Your account email was changed to " +
@@ -92,7 +96,7 @@ export default function LoginPage() {
         showToast("Google sign-in failed. Please try again.", "error");
       }
     }
-  }, [location.search, showToast]);
+  }, [location.search, showToast, navigate]);
 
   // Handle Login
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -194,6 +198,7 @@ export default function LoginPage() {
         return;
       }
 
+      // Account temporarily locked (brute-force protection)
       if (res.status === 423) {
         const remaining = data?.retryAfterSec;
         showToast(
@@ -202,12 +207,24 @@ export default function LoginPage() {
             : "Your account has been temporarily locked after multiple failed attempts.",
           "warning"
         );
+        resetTurnstile();
+        return;
+      }
+
+      // CAPTCHA validation failed
+      if (res.status === 400 && data?.error === "captcha_failed") {
+        showToast(
+          "Verification failed. Please complete the verification again.",
+          "error"
+        );
+        resetTurnstile();
         return;
       }
 
       // Authentication outcomes
       if (res.status === 401) {
         showToast("Incorrect email/username or password.", "error");
+        resetTurnstile();
       } else if (res.status === 403) {
         showToast(
           data?.error || "Please verify your email before logging in.",
@@ -313,12 +330,14 @@ export default function LoginPage() {
         <Button
           type="button"
           onClick={() => {
-            // Set cookie for same-domain (local dev)
-            document.cookie =
-              "PS_OAUTH_INTENT=login; Path=/; Max-Age=300; SameSite=Lax";
-            // Pass intent via query parameter for cross-domain (Railway)
+            // Set cookie with appropriate SameSite attribute based on environment
+            setOAuthIntentCookie('login');
+            // Pass intent and frontend URL via query parameters
+            // The backend will use the frontend_url to redirect back to the correct frontend after OAuth
             const API_BASE = getApiBase(); // Get API base at runtime
-            window.location.assign(`${API_BASE}/oauth2/authorization/google?intent=login`);
+            const frontendOrigin = getFrontendOrigin(); // Get current frontend origin
+            const redirectUrl = encodeURIComponent(`${frontendOrigin}/auth?mode=oauth-success`);
+            window.location.assign(`${API_BASE}/oauth2/authorization/google?intent=login&redirect_uri=${redirectUrl}`);
           }}
           className="mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-3 md:py-6 text-base md:text-lg rounded-md hover:bg-gray-50"
         >

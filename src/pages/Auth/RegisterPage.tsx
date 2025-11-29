@@ -16,7 +16,7 @@ import {
   getTurnstileToken,
   resetTurnstile,
 } from '@/utils/security/turnstile'
-import { getApiBase } from '@/utils/apiConfig'
+import { getApiBase, setOAuthIntentCookie, getFrontendOrigin } from '@/utils/apiConfig'
 
 // Don't call getApiBase() at module load time - it needs window.location
 // Instead, call it at runtime when needed
@@ -227,12 +227,19 @@ export default function RegisterPage() {
         return
       }
 
-      // validation or bad input
+      // validation or bad input (including CAPTCHA failures)
       if (res.status === 400) {
+        const errorMessage = payload?.error || payload?.message || 'Please review your input and try again.'
+        // Check if error is related to CAPTCHA for better user feedback
+        const isCaptchaError = errorMessage.toLowerCase().includes('captcha') || 
+                              errorMessage.toLowerCase().includes('verification') ||
+                              errorMessage.toLowerCase().includes('human')
+        
         showToast(
-          payload?.error || 'Please review your input and try again.',
+          errorMessage,
           'error'
         )
+        // Always reset Turnstile on 400 errors to allow retry
         resetTurnstile()
         return
       }
@@ -412,12 +419,14 @@ export default function RegisterPage() {
         <Button
           type='button'
           onClick={() => {
-            // Set cookie for same-domain (local dev)
-            document.cookie =
-              'PS_OAUTH_INTENT=register; Path=/; Max-Age=300; SameSite=Lax'
-            // Pass intent via query parameter for cross-domain (Railway)
+            // Set cookie with appropriate SameSite attribute based on environment
+            setOAuthIntentCookie('register');
+            // Pass intent and frontend URL via query parameters
+            // The backend will use the frontend_url to redirect back to the correct frontend after OAuth
             const API_BASE = getApiBase(); // Get API base at runtime
-            window.location.href = `${API_BASE}/oauth2/authorization/google?intent=register`
+            const frontendOrigin = getFrontendOrigin(); // Get current frontend origin
+            const redirectUrl = encodeURIComponent(`${frontendOrigin}/auth?mode=oauth-success`);
+            window.location.href = `${API_BASE}/oauth2/authorization/google?intent=register&redirect_uri=${redirectUrl}`
           }}
           className='mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-2 rounded-md hover:bg-gray-50'
         >

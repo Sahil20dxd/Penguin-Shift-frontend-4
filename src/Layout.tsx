@@ -12,7 +12,10 @@ import {
   Globe2, // icon for Explore
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import LogRocket from "logrocket";
+// LogRocket is a UMD module - use namespace import and access default
+import * as LogRocketModule from "logrocket";
+// UMD modules expose their API as default export
+const LogRocket = (LogRocketModule as any).default || LogRocketModule;
 import {
   Sheet,
   SheetContent,
@@ -32,7 +35,7 @@ const LogoImage = ({ src, alt, className }: { src: string; alt: string; classNam
     alt={alt} 
     className={className}
     decoding="async"
-    fetchPriority="high"
+    fetchpriority="high"
     whileHover={{ scale: 1.05, rotate: 5 }}
     transition={{ type: "spring", stiffness: 300, damping: 20 }}
   />
@@ -59,7 +62,16 @@ interface LayoutProps {
 }
 
 export default function Layout({ children, currentPageName }: LayoutProps) {
-  LogRocket.init("qjhgt3/penguinshift");
+  // Initialize LogRocket
+  // Note: 401 errors from /auth/me are expected when user is not authenticated
+  // LogRocket may log them, but they're not actual errors
+  LogRocket.init("qjhgt3/penguinshift", {
+    // Only capture network in production, or configure to ignore 401s
+    ...(import.meta.env.DEV && {
+      // In development, you can disable network capture to reduce noise
+      // network: { captureConsole: false }
+    }),
+  });
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

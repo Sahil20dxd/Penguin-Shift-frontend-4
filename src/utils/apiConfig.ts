@@ -1,55 +1,66 @@
 // src/utils/apiConfig.ts
-// --------------------------------------------------------------------
-// Centralized API base URL configuration.
-// Supports both local development and production deployments.
-// --------------------------------------------------------------------
+// API base URL configuration and OAuth helpers
 
 /**
- * Get the API base URL.
- * Priority:
- * 1. VITE_API_BASE environment variable (if set)
- * 2. Production URL (https://penguinshift-backend.up.railway.app)
- * 3. Local development URL - uses computer's IP when accessed from mobile/network
- * 
- * In development, you can create a .env.local file with:
- * VITE_API_BASE=http://127.0.0.1:8080
- * 
- * Or use the production URL by default when deployed.
+ * Gets API base URL with fallback priority:
+ * 1. VITE_API_BASE env variable
+ * 2. Production URL (if not localhost)
+ * 3. Local development URL
  */
 export function getApiBase(): string {
-  // Check for explicit environment variable first
+  // Check environment variable first
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE) {
     return (import.meta as any).env.VITE_API_BASE
   }
   
-  // Check process.env (fallback for older setups)
+  // Fallback for older setups
   if (typeof process !== 'undefined' && (process.env as any)?.REACT_APP_API_URL) {
     return (process.env as any).REACT_APP_API_URL
   }
   
-  // Check if we're in production (deployed)
-  // In production, use Railway URL
+  // Determine URL based on hostname
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname
-    // If not localhost or 127.0.0.1, check if it's a local network IP
+    
     if (hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname !== '0.0.0.0') {
-      // Check if it's a local network IP (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+      // Check if local network IP
       const isLocalNetwork = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(hostname)
       
       if (isLocalNetwork) {
-        // Accessing from mobile/network device - use the same IP for backend
-        return `http://${hostname}:8080`
+        return `http://${hostname}:8080` // Mobile/network device
       } else {
-        // Production deployment
-        return 'https://penguinshift-backend.up.railway.app'
+        return 'https://penguinshift-backend.up.railway.app' // Production
       }
     }
   }
   
-  // Default to local development (when accessing from same machine)
-  return 'http://127.0.0.1:8080'
+  return 'http://127.0.0.1:8080' // Local development
 }
 
-// Export the API base URL as a constant
-export const API_BASE = getApiBase()
+/**
+ * Gets current frontend origin for OAuth redirects
+ */
+export function getFrontendOrigin(): string {
+  return typeof window !== 'undefined' 
+    ? window.location.origin 
+    : 'http://localhost:5173'
+}
+
+/**
+ * Sets OAuth intent cookie with appropriate SameSite attribute
+ * Production: SameSite=None; Secure (cross-domain)
+ * Development: SameSite=Lax (same-domain)
+ */
+export function setOAuthIntentCookie(intent: 'login' | 'register'): void {
+  if (typeof window === 'undefined') return;
+  
+  const hostname = window.location.hostname
+  const isProduction = hostname !== 'localhost' && 
+                       hostname !== '127.0.0.1' &&
+                       !hostname.match(/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)
+  const isHttps = window.location.protocol === 'https:' || getApiBase().startsWith('https://')
+  
+  const sameSite = isProduction && isHttps ? 'SameSite=None; Secure' : 'SameSite=Lax'
+  document.cookie = `PS_OAUTH_INTENT=${intent}; Path=/; Max-Age=300; ${sameSite}`
+}
 
