@@ -29,12 +29,36 @@ export default function AuthRouter() {
 
     // Helper to refresh session from cookies and land on profile
     const finishAndGoProfile = async () => {
+      console.log("═══════════════════════════════════════════════════════════");
+      console.log("🚀 Frontend OAuth Callback: Starting OAuth success flow");
+      console.log("═══════════════════════════════════════════════════════════");
+      
       const API_BASE = getApiBase(); // Get API base at runtime
+      console.log("📋 Configuration:");
+      console.log("  - API Base URL:", API_BASE);
+      console.log("  - Current URL:", window.location.href);
+      console.log("  - Current Origin:", window.location.origin);
+      console.log("  - Search Params:", location.search);
+      
+      // Extract session ID from URL if present
+      const sessionParam = params.get("session");
+      if (sessionParam) {
+        console.log("  - Session ID from URL:", sessionParam);
+      } else {
+        console.warn("⚠️ No session ID in URL parameters");
+      }
       
       try {
         // Step 1: Call /auth/oauth-callback to set cookies from session
-        // This endpoint reads tokens from session and sets them as HTTP-only cookies
-        console.log("OAuth callback: Calling /auth/oauth-callback to set cookies...");
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("📞 Step 1: Calling /auth/oauth-callback to set cookies");
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("  - Endpoint:", `${API_BASE}/auth/oauth-callback`);
+        console.log("  - Method: GET");
+        console.log("  - Credentials: include");
+        console.log("  - Headers: Content-Type: application/json");
+        
+        const callbackStartTime = Date.now();
         const callbackRes = await fetch(`${API_BASE}/auth/oauth-callback`, {
           method: "GET",
           credentials: "include",
@@ -42,19 +66,69 @@ export default function AuthRouter() {
             "Content-Type": "application/json",
           },
         });
+        const callbackDuration = Date.now() - callbackStartTime;
+        
+        console.log("📥 Response received:");
+        console.log("  - Status:", callbackRes.status, callbackRes.statusText);
+        console.log("  - Duration:", callbackDuration, "ms");
+        console.log("  - OK:", callbackRes.ok);
+        console.log("  - Headers:", Object.fromEntries(callbackRes.headers.entries()));
+        
+        // Check Set-Cookie headers
+        const setCookieHeaders = callbackRes.headers.getSetCookie?.() || [];
+        if (setCookieHeaders.length > 0) {
+          console.log("🍪 Set-Cookie headers received:", setCookieHeaders.length);
+          setCookieHeaders.forEach((cookie, index) => {
+            console.log(`  - Cookie ${index + 1}:`, cookie.substring(0, Math.min(100, cookie.length)) + "...");
+          });
+        } else {
+          console.warn("⚠️ No Set-Cookie headers in response");
+        }
         
         if (!callbackRes.ok) {
           const errorData = await callbackRes.json().catch(() => ({}));
-          console.error(`OAuth callback: /auth/oauth-callback failed with status ${callbackRes.status}`, errorData);
+          console.error("❌ /auth/oauth-callback failed:");
+          console.error("  - Status:", callbackRes.status);
+          console.error("  - Status Text:", callbackRes.statusText);
+          console.error("  - Error Data:", errorData);
           navigate("/auth?mode=login", { replace: true });
           return;
         }
         
+        // Parse response
+        console.log("📦 Parsing response data...");
+        const callbackData = await callbackRes.json().catch((err) => {
+          console.error("❌ Failed to parse JSON response:", err);
+          return null;
+        });
+        
+        if (callbackData) {
+          console.log("✅ Response data parsed:");
+          console.log("  - Email:", callbackData.email);
+          console.log("  - Username:", callbackData.username);
+          console.log("  - Role:", callbackData.role);
+          console.log("  - Full data:", callbackData);
+        }
+        
         // Step 2: Wait a moment for cookies to be processed by browser
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("⏳ Step 2: Waiting for cookies to be processed by browser");
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("  - Wait time: 300ms");
         await new Promise(resolve => setTimeout(resolve, 300));
+        console.log("✅ Wait complete");
         
         // Step 3: Call /auth/me to get user info (cookies should now be set)
-        console.log("OAuth callback: Calling /auth/me to get user info...");
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("📞 Step 3: Calling /auth/me to get user info");
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("  - Endpoint:", `${API_BASE}/auth/me`);
+        console.log("  - Method: GET");
+        console.log("  - Credentials: include");
+        console.log("  - Headers: Content-Type: application/json");
+        console.log("  - Note: Cookies should be sent automatically with credentials: 'include'");
+        
+        const meStartTime = Date.now();
         const meRes = await fetch(`${API_BASE}/auth/me`, {
           method: "GET",
           credentials: "include",
@@ -62,9 +136,23 @@ export default function AuthRouter() {
             "Content-Type": "application/json",
           },
         });
+        const meDuration = Date.now() - meStartTime;
+        
+        console.log("📥 /auth/me Response received:");
+        console.log("  - Status:", meRes.status, meRes.statusText);
+        console.log("  - Duration:", meDuration, "ms");
+        console.log("  - OK:", meRes.ok);
+        console.log("  - Headers:", Object.fromEntries(meRes.headers.entries()));
         
         if (meRes.ok) {
           const data = await meRes.json();
+          console.log("✅ /auth/me Success:");
+          console.log("  - User data:", data);
+          console.log("  - Email:", data.email);
+          console.log("  - Username:", data.username);
+          console.log("  - Role:", data.role);
+          
+          console.log("🔐 Setting user in auth context...");
           login(
             {
               name: data.username || data.name || "User",
@@ -76,12 +164,20 @@ export default function AuthRouter() {
             },
             undefined
           );
-          console.log("OAuth callback: Successfully logged in user:", data.email);
+          console.log("✅ User set in auth context");
+          console.log("═══════════════════════════════════════════════════════════");
+          console.log("✅ OAuth Callback: SUCCESS - Navigating to profile");
+          console.log("═══════════════════════════════════════════════════════════");
           navigate("/profile", { replace: true });
         } else {
           // If /auth/me fails, try using data from /auth/oauth-callback response
-          const callbackData = await callbackRes.json();
-          if (callbackData.email) {
+          console.warn("⚠️ /auth/me failed, attempting to use data from /auth/oauth-callback response");
+          if (callbackData && callbackData.email) {
+            console.log("✅ Using callback data:");
+            console.log("  - Email:", callbackData.email);
+            console.log("  - Username:", callbackData.username);
+            console.log("  - Role:", callbackData.role);
+            
             login(
               {
                 name: callbackData.username || callbackData.name || "User",
@@ -93,15 +189,28 @@ export default function AuthRouter() {
               },
               undefined
             );
-            console.log("OAuth callback: Using data from oauth-callback response");
+            console.log("✅ User set from callback data");
+            console.log("═══════════════════════════════════════════════════════════");
+            console.log("✅ OAuth Callback: SUCCESS (using callback data) - Navigating to profile");
+            console.log("═══════════════════════════════════════════════════════════");
             navigate("/profile", { replace: true });
           } else {
-            console.error(`OAuth callback: /auth/me failed with status ${meRes.status}`);
+            console.error("❌ /auth/me failed and no valid callback data available:");
+            console.error("  - /auth/me status:", meRes.status);
+            console.error("  - Callback data:", callbackData);
+            const errorText = await meRes.text().catch(() => "Could not read error");
+            console.error("  - Error response:", errorText);
             navigate("/auth?mode=login", { replace: true });
           }
         }
       } catch (error) {
-        console.error("OAuth callback: Error during OAuth flow", error);
+        console.error("═══════════════════════════════════════════════════════════");
+        console.error("❌ OAuth Callback: ERROR during OAuth flow");
+        console.error("═══════════════════════════════════════════════════════════");
+        console.error("  - Error type:", error instanceof Error ? error.constructor.name : typeof error);
+        console.error("  - Error message:", error instanceof Error ? error.message : String(error));
+        console.error("  - Error stack:", error instanceof Error ? error.stack : "N/A");
+        console.error("  - Full error:", error);
         navigate("/auth?mode=login", { replace: true });
       }
     };

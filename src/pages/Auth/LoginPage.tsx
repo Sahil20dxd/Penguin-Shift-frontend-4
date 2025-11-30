@@ -386,14 +386,38 @@ export default function LoginPage() {
         <Button
           type="button"
           onClick={() => {
+            console.log("═══════════════════════════════════════════════════════════");
+            console.log("🚀 Frontend: Login with Google button clicked");
+            console.log("═══════════════════════════════════════════════════════════");
+            
             // Set cookie with appropriate SameSite attribute based on environment
+            console.log("🍪 Setting OAuth intent cookie (login)...");
             setOAuthIntentCookie('login');
+            console.log("✅ OAuth intent cookie set");
+            
             // Pass intent and frontend URL via query parameters
             // The backend will use the frontend_url to redirect back to the correct frontend after OAuth
             const API_BASE = getApiBase(); // Get API base at runtime
             const frontendOrigin = getFrontendOrigin(); // Get current frontend origin
             const redirectUrl = encodeURIComponent(`${frontendOrigin}/auth?mode=oauth-success`);
-            window.location.assign(`${API_BASE}/oauth2/authorization/google?intent=login&redirect_uri=${redirectUrl}`);
+            
+            const oauthUrl = `${API_BASE}/oauth2/authorization/google?intent=login&redirect_uri=${redirectUrl}`;
+            
+            console.log("📋 OAuth Configuration:");
+            console.log("  - API Base URL:", API_BASE);
+            console.log("  - Frontend Origin:", frontendOrigin);
+            console.log("  - Redirect URL (encoded):", redirectUrl);
+            console.log("  - Redirect URL (decoded):", decodeURIComponent(redirectUrl));
+            console.log("  - Full OAuth URL:", oauthUrl);
+            console.log("  - Current window location:", window.location.href);
+            console.log("  - Current origin:", window.location.origin);
+            
+            console.log("🔄 Redirecting to OAuth provider...");
+            console.log("═══════════════════════════════════════════════════════════");
+            console.log("✅ Frontend: OAuth redirect initiated");
+            console.log("═══════════════════════════════════════════════════════════");
+            
+            window.location.assign(oauthUrl);
           }}
           className="mt-3 w-full border border-gray-300 bg-white text-gray-700 font-medium py-3 md:py-6 text-base md:text-lg rounded-md hover:bg-gray-50"
         >
