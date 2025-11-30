@@ -49,78 +49,18 @@ export default function AuthRouter() {
       }
       
       try {
-        // Step 1: Call /auth/oauth-callback to set cookies from session
+        // Step 1: Wait a moment for cookies to be processed by browser (cookies are set in redirect response)
         console.log("═══════════════════════════════════════════════════════════");
-        console.log("📞 Step 1: Calling /auth/oauth-callback to set cookies");
+        console.log("⏳ Step 1: Waiting for cookies to be processed by browser");
         console.log("═══════════════════════════════════════════════════════════");
-        console.log("  - Endpoint:", `${API_BASE}/auth/oauth-callback`);
-        console.log("  - Method: GET");
-        console.log("  - Credentials: include");
-        console.log("  - Headers: Content-Type: application/json");
-        
-        const callbackStartTime = Date.now();
-        const callbackRes = await fetch(`${API_BASE}/auth/oauth-callback`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const callbackDuration = Date.now() - callbackStartTime;
-        
-        console.log("📥 Response received:");
-        console.log("  - Status:", callbackRes.status, callbackRes.statusText);
-        console.log("  - Duration:", callbackDuration, "ms");
-        console.log("  - OK:", callbackRes.ok);
-        console.log("  - Headers:", Object.fromEntries(callbackRes.headers.entries()));
-        
-        // Check Set-Cookie headers
-        const setCookieHeaders = callbackRes.headers.getSetCookie?.() || [];
-        if (setCookieHeaders.length > 0) {
-          console.log("🍪 Set-Cookie headers received:", setCookieHeaders.length);
-          setCookieHeaders.forEach((cookie, index) => {
-            console.log(`  - Cookie ${index + 1}:`, cookie.substring(0, Math.min(100, cookie.length)) + "...");
-          });
-        } else {
-          console.warn("⚠️ No Set-Cookie headers in response");
-        }
-        
-        if (!callbackRes.ok) {
-          const errorData = await callbackRes.json().catch(() => ({}));
-          console.error("❌ /auth/oauth-callback failed:");
-          console.error("  - Status:", callbackRes.status);
-          console.error("  - Status Text:", callbackRes.statusText);
-          console.error("  - Error Data:", errorData);
-          navigate("/auth?mode=login", { replace: true });
-          return;
-        }
-        
-        // Parse response
-        console.log("📦 Parsing response data...");
-        const callbackData = await callbackRes.json().catch((err) => {
-          console.error("❌ Failed to parse JSON response:", err);
-          return null;
-        });
-        
-        if (callbackData) {
-          console.log("✅ Response data parsed:");
-          console.log("  - Email:", callbackData.email);
-          console.log("  - Username:", callbackData.username);
-          console.log("  - Role:", callbackData.role);
-          console.log("  - Full data:", callbackData);
-        }
-        
-        // Step 2: Wait a moment for cookies to be processed by browser
-        console.log("═══════════════════════════════════════════════════════════");
-        console.log("⏳ Step 2: Waiting for cookies to be processed by browser");
-        console.log("═══════════════════════════════════════════════════════════");
-        console.log("  - Wait time: 300ms");
-        await new Promise(resolve => setTimeout(resolve, 300));
+        console.log("  - Wait time: 500ms");
+        console.log("  - Note: Cookies should be set directly in OAuth redirect response");
+        await new Promise(resolve => setTimeout(resolve, 500));
         console.log("✅ Wait complete");
         
-        // Step 3: Call /auth/me to get user info (cookies should now be set)
+        // Step 2: Try /auth/me first (cookies should be set directly from redirect)
         console.log("═══════════════════════════════════════════════════════════");
-        console.log("📞 Step 3: Calling /auth/me to get user info");
+        console.log("📞 Step 2: Calling /auth/me to get user info");
         console.log("═══════════════════════════════════════════════════════════");
         console.log("  - Endpoint:", `${API_BASE}/auth/me`);
         console.log("  - Method: GET");
@@ -129,7 +69,7 @@ export default function AuthRouter() {
         console.log("  - Note: Cookies should be sent automatically with credentials: 'include'");
         
         const meStartTime = Date.now();
-        const meRes = await fetch(`${API_BASE}/auth/me`, {
+        let meRes = await fetch(`${API_BASE}/auth/me`, {
           method: "GET",
           credentials: "include",
           headers: {
@@ -169,39 +109,119 @@ export default function AuthRouter() {
           console.log("✅ OAuth Callback: SUCCESS - Navigating to profile");
           console.log("═══════════════════════════════════════════════════════════");
           navigate("/profile", { replace: true });
+          return;
+        }
+        
+        // Step 3: If /auth/me fails, fallback to /auth/oauth-callback (session-based approach)
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("⚠️ /auth/me failed, trying fallback: /auth/oauth-callback");
+        console.log("═══════════════════════════════════════════════════════════");
+        console.log("  - Endpoint:", `${API_BASE}/auth/oauth-callback`);
+        console.log("  - Method: GET");
+        console.log("  - Credentials: include");
+        console.log("  - Headers: Content-Type: application/json");
+        
+        const callbackStartTime = Date.now();
+        const callbackRes = await fetch(`${API_BASE}/auth/oauth-callback`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const callbackDuration = Date.now() - callbackStartTime;
+        
+        console.log("📥 /auth/oauth-callback Response received:");
+        console.log("  - Status:", callbackRes.status, callbackRes.statusText);
+        console.log("  - Duration:", callbackDuration, "ms");
+        console.log("  - OK:", callbackRes.ok);
+        console.log("  - Headers:", Object.fromEntries(callbackRes.headers.entries()));
+        
+        // Check Set-Cookie headers
+        const setCookieHeaders = callbackRes.headers.getSetCookie?.() || [];
+        if (setCookieHeaders.length > 0) {
+          console.log("🍪 Set-Cookie headers received:", setCookieHeaders.length);
+          setCookieHeaders.forEach((cookie, index) => {
+            console.log(`  - Cookie ${index + 1}:`, cookie.substring(0, Math.min(100, cookie.length)) + "...");
+          });
         } else {
-          // If /auth/me fails, try using data from /auth/oauth-callback response
-          console.warn("⚠️ /auth/me failed, attempting to use data from /auth/oauth-callback response");
-          if (callbackData && callbackData.email) {
-            console.log("✅ Using callback data:");
-            console.log("  - Email:", callbackData.email);
-            console.log("  - Username:", callbackData.username);
-            console.log("  - Role:", callbackData.role);
-            
+          console.warn("⚠️ No Set-Cookie headers in response");
+        }
+        
+        if (!callbackRes.ok) {
+          const errorData = await callbackRes.json().catch(() => ({}));
+          console.error("❌ /auth/oauth-callback also failed:");
+          console.error("  - Status:", callbackRes.status);
+          console.error("  - Status Text:", callbackRes.statusText);
+          console.error("  - Error Data:", errorData);
+          navigate("/auth?mode=login", { replace: true });
+          return;
+        }
+        
+        // Parse response
+        console.log("📦 Parsing /auth/oauth-callback response data...");
+        const callbackData = await callbackRes.json().catch((err) => {
+          console.error("❌ Failed to parse JSON response:", err);
+          return null;
+        });
+        
+        if (callbackData && callbackData.email) {
+          console.log("✅ Callback data parsed:");
+          console.log("  - Email:", callbackData.email);
+          console.log("  - Username:", callbackData.username);
+          console.log("  - Role:", callbackData.role);
+          
+          // Wait for cookies to be set
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Try /auth/me again
+          meRes = await fetch(`${API_BASE}/auth/me`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          
+          if (meRes.ok) {
+            const data = await meRes.json();
+            console.log("✅ /auth/me Success after callback:");
             login(
               {
-                name: callbackData.username || callbackData.name || "User",
-                email: callbackData.email,
-                username: callbackData.username || callbackData.name || "user",
-                role: callbackData.role || "USER",
-                registeredWithMaster: callbackData.registeredWithMaster || false,
-                isRestricted: callbackData.isRestricted || false,
+                name: data.username || data.name || "User",
+                email: data.email,
+                username: data.username || data.name || "user",
+                role: data.role || "USER",
+                registeredWithMaster: data.registeredWithMaster || false,
+                isRestricted: data.isRestricted || false,
               },
               undefined
             );
-            console.log("✅ User set from callback data");
-            console.log("═══════════════════════════════════════════════════════════");
-            console.log("✅ OAuth Callback: SUCCESS (using callback data) - Navigating to profile");
-            console.log("═══════════════════════════════════════════════════════════");
             navigate("/profile", { replace: true });
-          } else {
-            console.error("❌ /auth/me failed and no valid callback data available:");
-            console.error("  - /auth/me status:", meRes.status);
-            console.error("  - Callback data:", callbackData);
-            const errorText = await meRes.text().catch(() => "Could not read error");
-            console.error("  - Error response:", errorText);
-            navigate("/auth?mode=login", { replace: true });
+            return;
           }
+          
+          // Last resort: use callback data directly
+          console.log("⚠️ Using callback data directly as last resort");
+          login(
+            {
+              name: callbackData.username || callbackData.name || "User",
+              email: callbackData.email,
+              username: callbackData.username || callbackData.name || "user",
+              role: callbackData.role || "USER",
+              registeredWithMaster: callbackData.registeredWithMaster || false,
+              isRestricted: callbackData.isRestricted || false,
+            },
+            undefined
+          );
+          navigate("/profile", { replace: true });
+        } else {
+          console.error("❌ Both /auth/me and /auth/oauth-callback failed:");
+          console.error("  - /auth/me status:", meRes.status);
+          console.error("  - Callback data:", callbackData);
+          const errorText = await meRes.text().catch(() => "Could not read error");
+          console.error("  - Error response:", errorText);
+          navigate("/auth?mode=login", { replace: true });
         }
       } catch (error) {
         console.error("═══════════════════════════════════════════════════════════");
