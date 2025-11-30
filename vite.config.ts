@@ -16,6 +16,32 @@ export default defineConfig({
       host: '0.0.0.0',
     },
     cors: true,
+    proxy: {
+      // Proxy API requests to backend during development
+      // This makes requests appear same-origin, so cookies work properly
+      // The proxy rewrites cookies to use localhost domain automatically
+      '/api': {
+        target: process.env.VITE_API_BASE || 'http://127.0.0.1:8080',
+        changeOrigin: true,
+        secure: false,
+        // Rewrite cookie domain to localhost so browser accepts them
+        cookieDomainRewrite: 'localhost',
+      },
+      // Proxy auth endpoints
+      '/auth': {
+        target: process.env.VITE_API_BASE || 'http://127.0.0.1:8080',
+        changeOrigin: true,
+        secure: false,
+        cookieDomainRewrite: 'localhost',
+      },
+      // Proxy OAuth endpoints (for OAuth initiation, redirects happen server-side)
+      '/oauth2': {
+        target: process.env.VITE_API_BASE || 'http://127.0.0.1:8080',
+        changeOrigin: true,
+        secure: false,
+        cookieDomainRewrite: 'localhost',
+      },
+    },
   },
   resolve: {
     alias: {

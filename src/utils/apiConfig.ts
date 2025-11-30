@@ -3,12 +3,16 @@
 
 /**
  * Gets API base URL with fallback priority:
- * 1. VITE_API_BASE env variable
- * 2. Production URL (if not localhost)
- * 3. Local development URL
+ * 1. VITE_API_BASE env variable (if set, use it - allows override)
+ * 2. In development mode: use empty string to leverage Vite proxy (same-origin, cookies work)
+ * 3. Production URL (if not localhost)
+ * 4. Local development URL (fallback)
+ * 
+ * Note: In development, using empty string makes requests go through Vite proxy,
+ * which makes them appear same-origin, allowing cookies to work properly.
  */
 export function getApiBase(): string {
-  // Check environment variable first
+  // Check environment variable first (allows override for production or network access)
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE) {
     return (import.meta as any).env.VITE_API_BASE
   }
@@ -18,7 +22,25 @@ export function getApiBase(): string {
     return (process.env as any).REACT_APP_API_URL
   }
   
-  // Determine URL based on hostname
+  // In development mode, use empty string to leverage Vite proxy
+  // This makes requests same-origin, so cookies work without CORS issues
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) {
+    // Check if we're on localhost/127.0.0.1 (use proxy)
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+        return '' // Use Vite proxy - requests will be same-origin
+      }
+      
+      // Check if local network IP - use full URL (proxy won't work across network)
+      const isLocalNetwork = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(hostname)
+      if (isLocalNetwork) {
+        return `http://${hostname}:8080` // Mobile/network device - need full URL
+      }
+    }
+  }
+  
+  // Determine URL based on hostname for production
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname
     
@@ -34,7 +56,9 @@ export function getApiBase(): string {
     }
   }
   
-  return 'http://127.0.0.1:8080' // Local development
+  // Fallback: if not in dev mode or can't determine, use local backend
+  // But if we're in dev mode and on localhost, we should have returned '' above
+  return 'http://127.0.0.1:8080' // Local development fallback
 }
 
 /**
