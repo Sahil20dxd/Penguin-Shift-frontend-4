@@ -29,39 +29,65 @@ export default function AuthRouter() {
 
     // Helper to refresh session from cookies and land on profile
     const finishAndGoProfile = async () => {
-      try {
-        // Add a small delay to ensure cookies are available after OAuth redirect
-        // This is especially important for cross-origin requests where cookies
-        // are set by the backend during the redirect
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        const API_BASE = getApiBase(); // Get API base at runtime
-        const res = await fetch(`${API_BASE}/auth/me`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          login(
-            {
-              name: data.username || data.name || "User",
-              email: data.email,
-              username: data.username || data.name || "user",
-              role: data.role || "USER",
-              registeredWithMaster: data.registeredWithMaster || false,
-              isRestricted: data.isRestricted || false,
+      const API_BASE = getApiBase(); // Get API base at runtime
+      const maxRetries = 5;
+      const initialDelay = 500; // Start with 500ms delay
+      
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          // Exponential backoff: 500ms, 1000ms, 1500ms, 2000ms, 2500ms
+          const delay = initialDelay + (attempt * 500);
+          if (attempt > 0) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            // First attempt: wait a bit for cookies to be processed
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+          
+          const res = await fetch(`${API_BASE}/auth/me`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
             },
-            undefined
-          );
-          navigate("/profile", { replace: true });
-        } else {
-          navigate("/auth?mode=login", { replace: true });
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            login(
+              {
+                name: data.username || data.name || "User",
+                email: data.email,
+                username: data.username || data.name || "user",
+                role: data.role || "USER",
+                registeredWithMaster: data.registeredWithMaster || false,
+                isRestricted: data.isRestricted || false,
+              },
+              undefined
+            );
+            navigate("/profile", { replace: true });
+            return; // Success - exit the retry loop
+          } else if (res.status === 401 && attempt < maxRetries - 1) {
+            // 401 means cookies aren't available yet, retry
+            console.log(`OAuth callback: /auth/me returned 401, retrying (attempt ${attempt + 1}/${maxRetries})...`);
+            continue;
+          } else {
+            // Non-401 error or last attempt failed
+            console.error(`OAuth callback: /auth/me failed with status ${res.status}`);
+            navigate("/auth?mode=login", { replace: true });
+            return;
+          }
+        } catch (error) {
+          if (attempt < maxRetries - 1) {
+            console.log(`OAuth callback: Error fetching /auth/me, retrying (attempt ${attempt + 1}/${maxRetries})...`, error);
+            continue;
+          } else {
+            // Last attempt failed
+            console.error("OAuth callback: Failed to fetch /auth/me after all retries", error);
+            navigate("/auth?mode=login", { replace: true });
+            return;
+          }
         }
-      } catch {
-        navigate("/auth?mode=login", { replace: true });
       }
     };
 
