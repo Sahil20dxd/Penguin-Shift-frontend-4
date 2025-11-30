@@ -3,6 +3,15 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Accept build arguments for environment variables
+# These will be passed from Render during build
+ARG VITE_TURNSTILE_SITE_KEY
+ARG VITE_API_BASE
+
+# Set as environment variables for Vite to access during build
+ENV VITE_TURNSTILE_SITE_KEY=${VITE_TURNSTILE_SITE_KEY}
+ENV VITE_API_BASE=${VITE_API_BASE}
+
 # Copy package files
 COPY package.json package-lock.json* ./
 
@@ -13,6 +22,7 @@ RUN npm ci
 COPY . .
 
 # Build the application
+# Vite will replace import.meta.env.VITE_* variables at build time
 RUN npm run build
 
 # ===== Stage 2: Serve Application =====
