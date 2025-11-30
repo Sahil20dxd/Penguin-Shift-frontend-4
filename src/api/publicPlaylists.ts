@@ -128,25 +128,9 @@ export async function checkPublicPlaylistNameAvailability(
   name: string
 ): Promise<{ available: boolean }> {
   try {
-    const { getApiBase } = await import('@/utils/apiConfig')
-    const API_BASE = getApiBase()
-    const response = await fetch(
-      `${API_BASE}/api/public-playlists/check-name?name=${encodeURIComponent(name)}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Failed to check name availability' }))
-      throw new Error(error.message || 'Failed to check name availability')
-    }
-
-    return response.json()
+    // Use apiJson helper which includes Authorization header automatically
+    const data = await apiJson(`/api/public-playlists/check-name?name=${encodeURIComponent(name)}`)
+    return data as { available: boolean }
   } catch (err: any) {
     console.error('[checkPublicPlaylistNameAvailability] Error:', err)
     throw err
@@ -183,25 +167,13 @@ export async function reportPlaylist(
   playlistId: number,
   payload: ReportPlaylistPayload
 ): Promise<{ success: boolean; message: string; reportId: number }> {
-  // Add CSRF token for report request
-  const { addCsrfToken } = await import('@/utils/csrf')
-  const headers = addCsrfToken({
-    'Content-Type': 'application/json',
-  })
-  
-  const response = await fetch(`${API_BASE}/api/public-playlists/${playlistId}/report`, {
+  // Use apiJson helper which includes Authorization header automatically
+  const data = await apiJson(`/api/public-playlists/${playlistId}/report`, {
     method: 'POST',
-    credentials: 'include',
-    headers,
-    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to report playlist' }))
-    throw new Error(error.message || 'Failed to report playlist')
-  }
-
-  return response.json()
+  return data as { success: boolean; message: string; reportId: number }
 }
 
 // Payload for starting a public playlist transfer
