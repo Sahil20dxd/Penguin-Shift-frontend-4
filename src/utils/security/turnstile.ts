@@ -219,15 +219,19 @@ export async function renderTurnstile(
   }
 
   // Verify container still exists (React might have unmounted it)
-  const containerElement = document.getElementById(containerId)
-  if (!containerElement) {
+  if (!container) {
     const error = `Container element #${containerId} was removed from DOM`
     debugLog('Error:', error)
     throw new Error(error)
   }
   
-  // Use the verified container
-  const container = containerElement
+  // Re-verify container exists in DOM
+  const containerElement = document.getElementById(containerId)
+  if (!containerElement || containerElement !== container) {
+    const error = `Container element #${containerId} was removed or changed`
+    debugLog('Error:', error)
+    throw new Error(error)
+  }
 
   // Check if container already has a Turnstile widget (prevent duplicates)
   // Check for both cf-turnstile class and iframe (widget creates iframe)
