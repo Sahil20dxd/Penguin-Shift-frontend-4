@@ -103,18 +103,42 @@ return new Promise((resolve, reject) => {
 }
 
 /** Wait for container element to exist in DOM */
-function waitForElement(containerId: string, timeout = 5000): Promise<HTMLElement> {
+function waitForElement(containerId: string, timeout = 10000): Promise<HTMLElement> {
   return new Promise((resolve, reject) => {
+    // Check immediately
     const element = document.getElementById(containerId)
     if (element) {
+      debugLog('Container element found immediately:', containerId)
       resolve(element)
       return
     }
 
-    const observer = new MutationObserver((mutations, obs) => {
+    debugLog('Container element not found, waiting for DOM...')
+    let attempts = 0
+    const maxAttempts = timeout / 100 // Check every 100ms
+
+    const checkInterval = setInterval(() => {
+      attempts++
       const element = document.getElementById(containerId)
       if (element) {
-        obs.disconnect()
+        clearInterval(checkInterval)
+        debugLog('Container element found after', attempts * 100, 'ms')
+        resolve(element)
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval)
+        const error = `Container element #${containerId} not found within ${timeout}ms`
+        debugLog('Error:', error)
+        reject(new Error(error))
+      }
+    }, 100)
+
+    // Also use MutationObserver as backup
+    const observer = new MutationObserver(() => {
+      const element = document.getElementById(containerId)
+      if (element) {
+        clearInterval(checkInterval)
+        observer.disconnect()
+        debugLog('Container element found via MutationObserver')
         resolve(element)
       }
     })
@@ -124,10 +148,10 @@ function waitForElement(containerId: string, timeout = 5000): Promise<HTMLElemen
       subtree: true
     })
 
-    // Timeout after specified time
+    // Cleanup on timeout
     setTimeout(() => {
+      clearInterval(checkInterval)
       observer.disconnect()
-      reject(new Error(`Container element #${containerId} not found within ${timeout}ms`))
     }, timeout)
   })
 }
@@ -155,17 +179,33 @@ export async function renderTurnstile(
   
   debugLog('Rendering Turnstile widget in container:', containerId, 'with site key:', SITE_KEY.substring(0, 8) + '...')
   
-  // Wait for container to exist in DOM
+  // Wait for container to exist in DOM (with longer timeout for React rendering)
   debugLog('Waiting for container element...')
-  await waitForElement(containerId)
-  debugLog('Container element found')
-  
-  await loadTurnstile()
-  if (!window.turnstile) {
-    const error = 'turnstile API not available after script load'
-    debugLog('Error:', error)
+  let container: HTMLElement | null = null
+  try {
+    container = await waitForElement(containerId)
+    debugLog('Container element found')
+  } catch (err) {
+    const error = `Container element #${containerId} not found. Make sure the element exists in the DOM.`
+    debugLog('Error:', error, err)
     throw new Error(error)
   }
+  
+  // Load Turnstile script
+  debugLog('Loading Turnstile script...')
+  await loadTurnstile()
+  
+  // Double-check that turnstile API is available
+  if (!window.turnstile) {
+    // Wait a bit more for the API to be available
+    await new Promise(resolve => setTimeout(resolve, 200))
+    if (!window.turnstile) {
+      const error = 'turnstile API not available after script load. Check browser console for errors.'
+      debugLog('Error:', error)
+      throw new Error(error)
+    }
+  }
+  debugLog('Turnstile API is available')
 
   // Reset existing widget if any (for different containers)
   if (widgetId) {
@@ -178,13 +218,16 @@ export async function renderTurnstile(
     }
   }
 
-  // Get the container element
-  const container = document.getElementById(containerId)
-  if (!container) {
-    const error = `Container element #${containerId} not found`
+  // Verify container still exists (React might have unmounted it)
+  const containerElement = document.getElementById(containerId)
+  if (!containerElement) {
+    const error = `Container element #${containerId} was removed from DOM`
     debugLog('Error:', error)
     throw new Error(error)
   }
+  
+  // Use the verified container
+  const container = containerElement
 
   // Check if container already has a Turnstile widget (prevent duplicates)
   // Check for both cf-turnstile class and iframe (widget creates iframe)
@@ -204,10 +247,24 @@ export async function renderTurnstile(
 
     const renderWidget = () => {
       try {
-        widgetId = window.turnstile!.render(container, {
+        // Verify container still exists before rendering
+        const containerEl = document.getElementById(containerId)
+        if (!containerEl) {
+          throw new Error(`Container #${containerId} not found during render`)
+        }
+        
+        // Clear any existing content in container
+        containerEl.innerHTML = ''
+        
+        debugLog('Calling turnstile.render() with sitekey:', SITE_KEY.substring(0, 8) + '...')
+        debugLog('Container element:', containerEl.id, 'Dimensions:', containerEl.offsetWidth, 'x', containerEl.offsetHeight)
+        
+        widgetId = window.turnstile!.render(containerEl, {
           sitekey: SITE_KEY,
+          theme: 'auto', // Auto theme (light/dark based on system)
+          size: 'normal', // Normal size widget
           callback: (t: string) => { 
-            debugLog('Turnstile token received')
+            debugLog('Turnstile token received:', t.substring(0, 20) + '...')
             lastToken = t
             if (onSuccess) onSuccess(t)
           },
@@ -241,6 +298,17 @@ export async function renderTurnstile(
         })
         renderedContainers.add(containerId)
         debugLog('Widget rendered successfully with ID:', widgetId)
+        
+        // Verify widget was actually created by checking for iframe
+        setTimeout(() => {
+          const iframe = containerEl.querySelector('iframe[src*="challenges.cloudflare.com"]')
+          if (iframe) {
+            debugLog('Widget iframe confirmed in DOM')
+          } else {
+            debugLog('Warning: Widget iframe not found after render. Widget may not be visible.')
+          }
+        }, 500)
+        
         resolve()
       } catch (err) {
         debugLog('Error rendering widget:', err)
@@ -250,9 +318,18 @@ export async function renderTurnstile(
 
     // Use turnstile.ready() if available (recommended by Cloudflare), otherwise render directly
     if (window.turnstile.ready) {
-      window.turnstile.ready(() => {
+      debugLog('Using turnstile.ready() callback')
+      try {
+        window.turnstile.ready(() => {
+          debugLog('turnstile.ready() callback fired')
+          renderWidget()
+        })
+      } catch (err) {
+        debugLog('Error in turnstile.ready():', err)
+        // Fallback to direct render
+        debugLog('Falling back to direct render')
         renderWidget()
-      })
+      }
     } else {
       // Fallback: render directly if ready() is not available
       debugLog('turnstile.ready() not available, rendering directly')

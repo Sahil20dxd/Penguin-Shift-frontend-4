@@ -404,8 +404,8 @@ export default function RegisterPage() {
         </div>
         {confirmErr && <p className='text-xs text-red-600 mb-2'>{confirmErr}</p>}
 
-        {/* CAPTCHA */}
-        {TURNSTILE_SITE_KEY && <div id='captcha-register' className='mb-4' />}
+        {/* CAPTCHA - Always render container, widget only renders if site key is configured */}
+        <div id='captcha-register' className='mb-4' style={{ minHeight: TURNSTILE_SITE_KEY ? '65px' : '0' }} />
 
         {/* Submit */}
         <Button

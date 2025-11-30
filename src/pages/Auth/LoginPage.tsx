@@ -315,8 +315,8 @@ export default function LoginPage() {
           Remember me
         </label>
 
-        {/* Turnstile */}
-        {TURNSTILE_SITE_KEY && <div id="captcha-login" className="mb-4"></div>}
+        {/* Turnstile - Always render container, widget only renders if site key is configured */}
+        <div id="captcha-login" className="mb-4" style={{ minHeight: TURNSTILE_SITE_KEY ? '65px' : '0' }}></div>
 
         {/* Login */}
         <Button
