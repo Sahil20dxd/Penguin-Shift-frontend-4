@@ -18,13 +18,17 @@ function debugLog(...args: any[]) {
 }
 
 declare global {
-interface Window {
-turnstile?: {
-render: (el: string | HTMLElement, opts: Record<string, any>) => string
-reset: (id?: string) => void
-}
-[key: string]: any
-}
+  interface Window {
+    turnstile?: {
+      render: (el: string | HTMLElement, opts: Record<string, any>) => string
+      reset: (id?: string) => void
+      ready: (callback: () => void) => void
+      getResponse: (id?: string) => string | undefined
+      remove: (id?: string) => void
+      isExpired: (id?: string) => boolean
+    }
+    [key: string]: any
+  }
 }
 
 /** Inject Turnstile script once and resolve when ready. */
@@ -61,10 +65,26 @@ return new Promise((resolve, reject) => {
   window[CALLBACK_NAME] = () => {
     clearTimeout(timeout)
     debugLog('Turnstile script loaded successfully')
-    if (!window.turnstile) {
-      debugLog('Warning: window.turnstile not available after script load')
+    // Wait a bit for turnstile API to be available
+    const checkTurnstile = () => {
+      if (window.turnstile) {
+        debugLog('Turnstile API is available')
+        resolve()
+      } else {
+        // Retry after a short delay
+        setTimeout(() => {
+          if (window.turnstile) {
+            debugLog('Turnstile API is now available (delayed)')
+            resolve()
+          } else {
+            debugLog('Warning: window.turnstile not available after script load')
+            // Still resolve to allow rendering to proceed
+            resolve()
+          }
+        }, 100)
+      }
     }
-    resolve()
+    checkTurnstile()
   }
   const s = document.createElement('script')
   s.src = SRC + '?render=explicit&onload=' + CALLBACK_NAME
@@ -75,8 +95,10 @@ return new Promise((resolve, reject) => {
     debugLog('Script loading error:', err)
     reject(new Error('Failed to load Turnstile script from Cloudflare'))
   }
-  document.body.appendChild(s)
-  debugLog('Script element appended to body')
+  // Append to head for better loading (or body if head not available)
+  const target = document.head || document.body
+  target.appendChild(s)
+  debugLog('Script element appended to', target.tagName)
 })
 }
 
@@ -165,38 +187,78 @@ export async function renderTurnstile(
   }
 
   // Check if container already has a Turnstile widget (prevent duplicates)
-  if (container.querySelector('.cf-turnstile')) {
+  // Check for both cf-turnstile class and iframe (widget creates iframe)
+  if (container.querySelector('.cf-turnstile') || container.querySelector('iframe[src*="challenges.cloudflare.com"]')) {
     debugLog('Container already has a Turnstile widget - skipping render')
     renderedContainers.add(containerId)
     return
   }
 
   debugLog('Rendering widget...')
-  // Render the widget according to Cloudflare docs
-  try {
-    widgetId = window.turnstile.render(container, {
-      sitekey: SITE_KEY,
-      callback: (t: string) => { 
-        debugLog('Turnstile token received')
-        lastToken = t
-        if (onSuccess) onSuccess(t)
-      },
-      'expired-callback': () => { 
-        debugLog('Turnstile token expired')
-        lastToken = null
-        if (onExpired) onExpired()
-      },
-      'error-callback': () => { 
-        debugLog('Turnstile widget error')
-        lastToken = null
+  // Render the widget according to Cloudflare docs using turnstile.ready()
+  return new Promise<void>((resolve, reject) => {
+    if (!window.turnstile) {
+      reject(new Error('turnstile API not available'))
+      return
+    }
+
+    const renderWidget = () => {
+      try {
+        widgetId = window.turnstile!.render(container, {
+          sitekey: SITE_KEY,
+          callback: (t: string) => { 
+            debugLog('Turnstile token received')
+            lastToken = t
+            if (onSuccess) onSuccess(t)
+          },
+          'expired-callback': () => { 
+            debugLog('Turnstile token expired - resetting widget')
+            lastToken = null
+            // Automatically reset widget to allow new challenge
+            if (widgetId && window.turnstile) {
+              try {
+                window.turnstile.reset(widgetId)
+                debugLog('Widget reset after expiration')
+              } catch (err) {
+                debugLog('Error resetting widget after expiration:', err)
+              }
+            }
+            if (onExpired) onExpired()
+          },
+          'error-callback': (errorCode?: string) => { 
+            debugLog('Turnstile widget error:', errorCode)
+            lastToken = null
+            // Reset widget on error to allow retry
+            if (widgetId && window.turnstile) {
+              try {
+                window.turnstile.reset(widgetId)
+                debugLog('Widget reset after error')
+              } catch (err) {
+                debugLog('Error resetting widget after error:', err)
+              }
+            }
+          }
+        })
+        renderedContainers.add(containerId)
+        debugLog('Widget rendered successfully with ID:', widgetId)
+        resolve()
+      } catch (err) {
+        debugLog('Error rendering widget:', err)
+        reject(err)
       }
-    })
-    renderedContainers.add(containerId)
-    debugLog('Widget rendered successfully with ID:', widgetId)
-  } catch (err) {
-    debugLog('Error rendering widget:', err)
-    throw err
-  }
+    }
+
+    // Use turnstile.ready() if available (recommended by Cloudflare), otherwise render directly
+    if (window.turnstile.ready) {
+      window.turnstile.ready(() => {
+        renderWidget()
+      })
+    } else {
+      // Fallback: render directly if ready() is not available
+      debugLog('turnstile.ready() not available, rendering directly')
+      renderWidget()
+    }
+  })
 }
 
 /** Get the last issued token (or null). */
@@ -206,11 +268,18 @@ return lastToken
 
 /** Reset widget and clear token. */
 export function resetTurnstile(containerId?: string): void {
-if (widgetId && window.turnstile) {
-try { window.turnstile.reset(widgetId) } catch {}
-}
-if (containerId) {
-renderedContainers.delete(containerId)
-}
-lastToken = null
+  if (widgetId && window.turnstile) {
+    try { 
+      window.turnstile.reset(widgetId) 
+      debugLog('Widget reset:', widgetId)
+    } catch (err) {
+      debugLog('Error resetting widget:', err)
+    }
+  }
+  if (containerId) {
+    renderedContainers.delete(containerId)
+    debugLog('Removed container from rendered set:', containerId)
+  }
+  lastToken = null
+  widgetId = null
 }
