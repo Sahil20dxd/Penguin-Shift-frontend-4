@@ -189,10 +189,13 @@ export default function AuthRouter() {
           console.log("  - Username:", callbackData.username);
           console.log("  - Role:", callbackData.role);
           
-          // Wait for cookies to be set
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Wait longer for cookies to be processed by browser (cross-origin cookies need more time)
+          console.log("⏳ Waiting for cookies to be processed by browser (1 second)...");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log("✅ Wait complete");
           
-          // Try /auth/me again
+          // Try /auth/me again to verify cookies are working
+          console.log("🔍 Verifying cookies by calling /auth/me...");
           meRes = await fetch(`${API_BASE}/auth/me`, {
             method: "GET",
             credentials: "include",
