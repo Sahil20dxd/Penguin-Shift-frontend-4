@@ -40,12 +40,15 @@ export default function AuthRouter() {
       console.log("  - Current Origin:", window.location.origin);
       console.log("  - Search Params:", location.search);
       
-      // Extract session ID from URL if present
-      const sessionParam = params.get("session");
-      if (sessionParam) {
-        console.log("  - Session ID from URL:", sessionParam);
+      // Extract token from URL if present (new approach - uses token cache instead of session)
+      const tokenParam = params.get("token");
+      const sessionParam = params.get("session"); // Legacy support
+      if (tokenParam) {
+        console.log("  - Token from URL:", tokenParam);
+      } else if (sessionParam) {
+        console.log("  - Session ID from URL (legacy):", sessionParam);
       } else {
-        console.warn("⚠️ No session ID in URL parameters");
+        console.warn("⚠️ No token or session ID in URL parameters");
       }
       
       try {
@@ -112,17 +115,32 @@ export default function AuthRouter() {
           return;
         }
         
-        // Step 3: If /auth/me fails, fallback to /auth/oauth-callback (session-based approach)
+        // Step 3: If /auth/me fails, fallback to /auth/oauth-callback (token-based approach)
         console.log("═══════════════════════════════════════════════════════════");
         console.log("⚠️ /auth/me failed, trying fallback: /auth/oauth-callback");
         console.log("═══════════════════════════════════════════════════════════");
-        console.log("  - Endpoint:", `${API_BASE}/auth/oauth-callback`);
+        
+        // Use token parameter if available, otherwise try session parameter (legacy)
+        const tokenParam = params.get("token");
+        const sessionParam = params.get("session");
+        const callbackUrl = tokenParam 
+          ? `${API_BASE}/auth/oauth-callback?token=${encodeURIComponent(tokenParam)}`
+          : sessionParam
+          ? `${API_BASE}/auth/oauth-callback?session=${encodeURIComponent(sessionParam)}`
+          : `${API_BASE}/auth/oauth-callback`;
+        
+        console.log("  - Endpoint:", callbackUrl);
         console.log("  - Method: GET");
         console.log("  - Credentials: include");
         console.log("  - Headers: Content-Type: application/json");
+        if (tokenParam) {
+          console.log("  - Using token parameter (new approach)");
+        } else if (sessionParam) {
+          console.log("  - Using session parameter (legacy approach)");
+        }
         
         const callbackStartTime = Date.now();
-        const callbackRes = await fetch(`${API_BASE}/auth/oauth-callback`, {
+        const callbackRes = await fetch(callbackUrl, {
           method: "GET",
           credentials: "include",
           headers: {
