@@ -20,8 +20,7 @@ import { getApiBase, setOAuthIntentCookie, getFrontendOrigin } from '@/utils/api
 
 // Don't call getApiBase() at module load time - it needs window.location
 // Instead, call it at runtime when needed
-const TURNSTILE_SITE_KEY =
-  (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || ''
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 
 // helpers
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())

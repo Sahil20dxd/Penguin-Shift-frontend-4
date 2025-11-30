@@ -8,13 +8,20 @@ let widgetId: string | null = null
 let lastToken: string | null = null
 
 const SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
-const SITE_KEY = (import.meta as any)?.env?.VITE_TURNSTILE_SITE_KEY || ''
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 const CALLBACK_NAME = '__onTurnstileLoaded'
 
 // Debug logging (only in development)
 const DEBUG = import.meta.env.DEV
 function debugLog(...args: any[]) {
   if (DEBUG) console.log('[Turnstile]', ...args)
+}
+
+// Log site key status (only first 8 chars in dev, full check in production)
+if (!SITE_KEY) {
+  console.warn('[Turnstile] VITE_TURNSTILE_SITE_KEY is not set. CAPTCHA will be disabled.')
+} else if (DEBUG) {
+  debugLog('Site key loaded:', SITE_KEY.substring(0, 8) + '...')
 }
 
 declare global {
