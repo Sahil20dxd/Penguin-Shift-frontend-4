@@ -29,7 +29,7 @@ export function getApiBase(): string {
       if (isLocalNetwork) {
         return `http://${hostname}:8080` // Mobile/network device
       } else {
-        return 'https://penguinshift-backend.up.railway.app' // Production
+        return 'https://penguinshift-backend-v5.onrender.com' // Production
       }
     }
   }
