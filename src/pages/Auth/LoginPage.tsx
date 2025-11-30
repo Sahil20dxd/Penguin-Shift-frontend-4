@@ -136,54 +136,111 @@ export default function LoginPage() {
 
       if (res.ok) {
         // Login successful - tokens are now stored in HTTP-only cookies by backend
-        // Fetch complete user data from /auth/me using cookies (credentials: "include")
-        // This ensures we have the most up-to-date user information including role
-        try {
-          const API_BASE = getApiBase(); // Get API base at runtime
-          const meRes = await fetch(`${API_BASE}/auth/me`, {
-            credentials: "include", // Uses HTTP-only cookies automatically
-          });
-          
-          if (meRes.ok) {
-            const meData = await meRes.json();
-            const generatedUsername =
-              meData?.username ||
-              identifier.trim().toLowerCase().replace(/\s+/g, "") ||
-              "user" + Math.floor(Math.random() * 1000);
+        // The backend already returns user data in the response, so use it directly
+        // This avoids timing issues with cookie propagation when calling /auth/me immediately
+        if (data?.user) {
+          // Use user data from login response
+          const userData = data.user;
+          const generatedUsername =
+            userData?.username ||
+            identifier.trim().toLowerCase().replace(/\s+/g, "") ||
+            "user" + Math.floor(Math.random() * 1000);
 
-            // Note: No token passed - tokens are in HTTP-only cookies, not accessible to JS
+          // Note: No token passed - tokens are in HTTP-only cookies, not accessible to JS
+          login(
+            {
+              name: userData?.username || userData?.name || identifier.trim(),
+              email: userData?.email || identifier.trim(),
+              username: generatedUsername,
+              role: userData?.role || "USER",
+              registeredWithMaster: userData?.registeredWithMaster || false,
+              isRestricted: userData?.isRestricted || false,
+            },
+            undefined // Tokens are in HTTP-only cookies, not passed here
+          );
+          
+          showToast("Welcome back! Login successful.", "success");
+          resetTurnstile();
+          navigate("/profile", { replace: true });
+          return;
+        } else {
+          // Fallback: if user data not in response, try fetching from /auth/me
+          // Add a small delay to ensure cookies are set
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          try {
+            const API_BASE = getApiBase();
+            const meRes = await fetch(`${API_BASE}/auth/me`, {
+              credentials: "include",
+            });
+            
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              const generatedUsername =
+                meData?.username ||
+                identifier.trim().toLowerCase().replace(/\s+/g, "") ||
+                "user" + Math.floor(Math.random() * 1000);
+
+              login(
+                {
+                  name: meData?.username || meData?.name || identifier.trim(),
+                  email: meData?.email || identifier.trim(),
+                  username: generatedUsername,
+                  role: meData?.role || "USER",
+                  registeredWithMaster: meData?.registeredWithMaster || false,
+                  isRestricted: meData?.isRestricted || false,
+                },
+                undefined
+              );
+              
+              showToast("Welcome back! Login successful.", "success");
+              resetTurnstile();
+              navigate("/profile", { replace: true });
+              return;
+            } else {
+              // If /auth/me also fails, set minimal user state to allow profile access
+              console.warn("Failed to fetch user data, using fallback");
+              const fallbackUsername = identifier.trim().toLowerCase().replace(/\s+/g, "") || "user" + Math.floor(Math.random() * 1000);
+              
+              login(
+                {
+                  name: identifier.trim(),
+                  email: identifier.includes("@") ? identifier.trim() : "",
+                  username: fallbackUsername,
+                  role: "USER",
+                  registeredWithMaster: false,
+                  isRestricted: false,
+                },
+                undefined
+              );
+              
+              showToast("Login successful. Loading your profile...", "success");
+              resetTurnstile();
+              navigate("/profile", { replace: true });
+              return;
+            }
+          } catch (meError) {
+            // Network error - set minimal user state
+            console.error("Error fetching user data after login:", meError);
+            const fallbackUsername = identifier.trim().toLowerCase().replace(/\s+/g, "") || "user" + Math.floor(Math.random() * 1000);
+            
             login(
               {
-                name: meData?.username || meData?.name || identifier.trim(),
-                email: meData?.email || identifier.trim(),
-                username: generatedUsername,
-                role: meData?.role || "USER",
-                registeredWithMaster: meData?.registeredWithMaster || false,
-                isRestricted: meData?.isRestricted || false,
+                name: identifier.trim(),
+                email: identifier.includes("@") ? identifier.trim() : "",
+                username: fallbackUsername,
+                role: "USER",
+                registeredWithMaster: false,
+                isRestricted: false,
               },
-              undefined // Tokens are in HTTP-only cookies, not passed here
+              undefined
             );
             
-            showToast("Welcome back! Login successful.", "success");
+            showToast("Login successful. Loading your profile...", "success");
             resetTurnstile();
             navigate("/profile", { replace: true });
             return;
-          } else {
-            // If /auth/me fails, still show success but user will need to refresh
-            showToast("Login successful, but couldn't fetch user details. Please refresh the page.", "warning");
-            setTimeout(() => {
-              window.location.href = "/profile";
-            }, 1000);
-            return;
           }
-        } catch (meError) {
-          // Network error fetching user data
-          console.error("Error fetching user data after login:", meError);
-          showToast("Login successful, but couldn't fetch user details. Please refresh the page.", "warning");
-          setTimeout(() => {
-            window.location.href = "/profile";
-          }, 1000);
-          return;
         }
       }
 
