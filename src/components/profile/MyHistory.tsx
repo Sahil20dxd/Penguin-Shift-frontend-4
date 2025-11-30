@@ -30,7 +30,8 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getTransferHistory, getTransferHistoryTracks, downloadTransferHistoryCSV, downloadTransferHistoryPDF } from "@/api/transferHistory";
+import { Switch } from "@/components/ui/switch";
+import { getTransferHistory, getTransferHistoryTracks, downloadTransferHistoryCSV, downloadTransferHistoryPDF, toggleTransferHistoryVisibility } from "@/api/transferHistory";
 import type { TransferHistoryResponse, TransferHistoryTrackResponse } from "@/types/transferHistory";
 
 export default function MyHistory() {
@@ -41,6 +42,7 @@ export default function MyHistory() {
   const [tracks, setTracks] = useState<TransferHistoryTrackResponse[]>([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchTransferHistory();
@@ -128,6 +130,34 @@ export default function MyHistory() {
     return Math.round((matched / total) * 100);
   };
 
+  const handleToggleVisibility = async (transfer: TransferHistoryResponse, newIsPublic: boolean) => {
+    const transferId = transfer.id;
+    
+    // Add to toggling set
+    setTogglingIds(prev => new Set(prev).add(transferId));
+    
+    try {
+      const updated = await toggleTransferHistoryVisibility(transferId, newIsPublic);
+      
+      // Update the transfer in the list
+      setTransfers(prev => prev.map(t => t.id === transferId ? updated : t));
+      
+      // Show success message
+      setError(null);
+    } catch (err: any) {
+      console.error("Failed to toggle visibility:", err);
+      setError(err.message || "Failed to toggle playlist visibility. Please try again.");
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      // Remove from toggling set
+      setTogglingIds(prev => {
+        const next = new Set(prev);
+        next.delete(transferId);
+        return next;
+      });
+    }
+  };
+
   return (
     <div>
       {/* Section Header */}
@@ -192,6 +222,7 @@ export default function MyHistory() {
                     <TableHead className="font-semibold">Transfer Details</TableHead>
                     <TableHead className="font-semibold">Date</TableHead>
                     <TableHead className="font-semibold">Match Rate</TableHead>
+                    <TableHead className="font-semibold">Visibility</TableHead>
                     <TableHead className="text-right font-semibold pr-6">
                       Actions
                     </TableHead>
@@ -239,6 +270,22 @@ export default function MyHistory() {
                           <p className="text-xs text-gray-500">
                             {transfer.matchedTracks}/{transfer.totalTracks} tracks
                           </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={transfer.isPublic || false}
+                            onCheckedChange={(checked) => handleToggleVisibility(transfer, checked)}
+                            disabled={togglingIds.has(transfer.id)}
+                            aria-label={transfer.isPublic ? "Make private" : "Make public"}
+                          />
+                          <span className="text-sm text-gray-600">
+                            {transfer.isPublic ? "Public" : "Private"}
+                          </span>
+                          {togglingIds.has(transfer.id) && (
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -325,6 +372,20 @@ export default function MyHistory() {
                     <p className="text-xs text-gray-400">
                       {formatDate(transfer.createdAt)}
                     </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Switch
+                        checked={transfer.isPublic || false}
+                        onCheckedChange={(checked) => handleToggleVisibility(transfer, checked)}
+                        disabled={togglingIds.has(transfer.id)}
+                        aria-label={transfer.isPublic ? "Make private" : "Make public"}
+                      />
+                      <span className="text-xs text-gray-600">
+                        {transfer.isPublic ? "Public" : "Private"}
+                      </span>
+                      {togglingIds.has(transfer.id) && (
+                        <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                      )}
+                    </div>
                   </div>
 
                   {/* Right Action Icons */}

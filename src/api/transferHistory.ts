@@ -209,3 +209,26 @@ export async function getTransferHistoryTracksByTransferId(
   }
 }
 
+/**
+ * Toggle the visibility (public/private) of a transfer history record.
+ * 
+ * PATCH /api/transfer-history/{id}/visibility
+ * Request body: { "isPublic": boolean }
+ * Response: Updated TransferHistoryResponse
+ */
+export async function toggleTransferHistoryVisibility(
+  id: number,
+  isPublic: boolean
+): Promise<TransferHistoryResponse> {
+  try {
+    const data = await apiJson(`/api/transfer-history/${id}/visibility`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isPublic }),
+    });
+    return data as TransferHistoryResponse;
+  } catch (error: any) {
+    console.error('[API] Error toggling visibility for transfer history ID', id, ':', error);
+    throw error;
+  }
+}
+
