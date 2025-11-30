@@ -135,10 +135,15 @@ export default function LoginPage() {
       }
 
       if (res.ok) {
-        // Login successful - tokens are now stored in HTTP-only cookies by backend
-        // The backend already returns user data in the response, so use it directly
-        // This avoids timing issues with cookie propagation when calling /auth/me immediately
+        // Login successful - tokens are returned in response body for Authorization header approach
+        // Also set as HTTP-only cookies as fallback for same-origin scenarios
         if (data?.user) {
+          // Store tokens in localStorage for Authorization header approach (cross-origin compatible)
+          if (data.accessToken && data.refreshToken) {
+            localStorage.setItem("penguinshift_access_token", data.accessToken);
+            localStorage.setItem("penguinshift_refresh_token", data.refreshToken);
+          }
+
           // Use user data from login response
           const userData = data.user;
           const generatedUsername =
@@ -146,7 +151,7 @@ export default function LoginPage() {
             identifier.trim().toLowerCase().replace(/\s+/g, "") ||
             "user" + Math.floor(Math.random() * 1000);
 
-          // Note: No token passed - tokens are in HTTP-only cookies, not accessible to JS
+          // Pass token to login function
           login(
             {
               name: userData?.username || userData?.name || identifier.trim(),
@@ -156,7 +161,7 @@ export default function LoginPage() {
               registeredWithMaster: userData?.registeredWithMaster || false,
               isRestricted: userData?.isRestricted || false,
             },
-            undefined // Tokens are in HTTP-only cookies, not passed here
+            data.accessToken // Pass token for Authorization header approach
           );
           
           showToast("Welcome back! Login successful.", "success");

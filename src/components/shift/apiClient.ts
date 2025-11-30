@@ -14,8 +14,11 @@ export async function apiJson(path: string, options: RequestInit = {}) {
   const method = (options.method || 'GET').toUpperCase()
   const isStateChanging = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)
   
+  // Add Authorization header if token is available (primary method for cross-origin)
+  const accessToken = localStorage.getItem("penguinshift_access_token")
   const headers = addCsrfToken({
     'Content-Type': 'application/json',
+    ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
     ...(options.headers || {})
   })
   
@@ -42,6 +45,7 @@ export async function apiJson(path: string, options: RequestInit = {}) {
 
     const retryHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
       ...(options.headers as Record<string, string> || {})
     }
     if (csrfToken) {

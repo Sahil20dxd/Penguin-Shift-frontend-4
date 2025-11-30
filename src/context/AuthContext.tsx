@@ -47,6 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers.set("Content-Type", "application/json");
       }
 
+      // Add Authorization header if token is available (primary method for cross-origin)
+      const accessToken = token || localStorage.getItem("penguinshift_access_token");
+      if (accessToken) {
+        headers.set("Authorization", `Bearer ${accessToken}`);
+      }
+
       const method = (init.method || 'GET').toUpperCase();
       const isStateChanging = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
       const headersWithCsrf = addCsrfToken(Object.fromEntries(headers.entries()));
@@ -54,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let res = await fetch(input, {
         ...init,
         headers: headersWithCsrf,
-        credentials: "include",
+        credentials: "include", // Still include credentials for cookie fallback
         body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
       });
 
@@ -68,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await fetch(`${getApiBase()}/auth/me`, {
               method: 'GET',
               credentials: 'include',
+              headers: accessToken ? { "Authorization": `Bearer ${accessToken}` } : {},
             });
             await new Promise(resolve => setTimeout(resolve, 200));
             csrfToken = getCsrfToken();
@@ -80,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (csrfToken) {
           retryHeaders.set('X-CSRF-TOKEN', csrfToken);
         }
+        if (accessToken) {
+          retryHeaders.set("Authorization", `Bearer ${accessToken}`);
+        }
 
         res = await fetch(input, {
           ...init,
@@ -91,11 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return res;
     },
-    []
+    [token]
   );
 
   useEffect(() => {
-    // Load cached user data
+    // Load cached user data and tokens
     const cached = localStorage.getItem("penguinshift_user");
     if (cached) {
       try {
@@ -105,11 +115,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Verify authentication via cookies
+    // Load token from localStorage
+    const storedToken = localStorage.getItem("penguinshift_access_token");
+    if (storedToken) {
+      setToken(storedToken);
+    }
+
+    // Verify authentication via Authorization header (primary) or cookies (fallback)
     (async () => {
       try {
+        const headers: HeadersInit = {};
+        if (storedToken) {
+          headers["Authorization"] = `Bearer ${storedToken}`;
+        }
+
         const res = await fetch(`${getApiBase()}/auth/me`, {
           credentials: "include",
+          headers,
         });
 
         if (res.ok) {
@@ -124,14 +146,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setUser(u);
           localStorage.setItem("penguinshift_user", JSON.stringify(u));
+          // Ensure token is set if we have it
+          if (storedToken) {
+            setToken(storedToken);
+          }
         } else {
+          // Clear invalid tokens
           setUser(null);
           localStorage.removeItem("penguinshift_user");
+          localStorage.removeItem("penguinshift_access_token");
+          localStorage.removeItem("penguinshift_refresh_token");
           setToken(null);
         }
       } catch {
         setUser(null);
         localStorage.removeItem("penguinshift_user");
+        localStorage.removeItem("penguinshift_access_token");
+        localStorage.removeItem("penguinshift_refresh_token");
         setToken(null);
       } finally {
         setLoading(false);
@@ -148,12 +179,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const finalUser: User = { ...userData, username, role: userData.role || "USER" };
     setUser(finalUser);
     localStorage.setItem("penguinshift_user", JSON.stringify(finalUser));
-    setToken(incomingToken || null);
+    
+    // Store token in state and localStorage
+    const tokenToStore = incomingToken || localStorage.getItem("penguinshift_access_token");
+    if (tokenToStore) {
+      setToken(tokenToStore);
+      localStorage.setItem("penguinshift_access_token", tokenToStore);
+    } else {
+      setToken(null);
+    }
   };
 
   const logout = async () => {
     setUser(null);
     setToken(null);
+    // Clear tokens from localStorage
+    localStorage.removeItem("penguinshift_user");
+    localStorage.removeItem("penguinshift_access_token");
+    localStorage.removeItem("penguinshift_refresh_token");
     localStorage.removeItem("penguinshift_user");
     
     try {

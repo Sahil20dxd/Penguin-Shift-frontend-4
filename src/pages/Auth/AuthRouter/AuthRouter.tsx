@@ -189,41 +189,18 @@ export default function AuthRouter() {
           console.log("  - Username:", callbackData.username);
           console.log("  - Role:", callbackData.role);
           
-          // Wait longer for cookies to be processed by browser (cross-origin cookies need more time)
-          console.log("⏳ Waiting for cookies to be processed by browser (1 second)...");
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          console.log("✅ Wait complete");
-          
-          // Try /auth/me again to verify cookies are working
-          console.log("🔍 Verifying cookies by calling /auth/me...");
-          meRes = await fetch(`${API_BASE}/auth/me`, {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-          
-          if (meRes.ok) {
-            const data = await meRes.json();
-            console.log("✅ /auth/me Success after callback:");
-            login(
-              {
-                name: data.username || data.name || "User",
-                email: data.email,
-                username: data.username || data.name || "user",
-                role: data.role || "USER",
-                registeredWithMaster: data.registeredWithMaster || false,
-                isRestricted: data.isRestricted || false,
-              },
-              undefined
-            );
-            navigate("/profile", { replace: true });
-            return;
+          // Store tokens in localStorage for Authorization header approach (cross-origin compatible)
+          if (callbackData.accessToken && callbackData.refreshToken) {
+            console.log("🔐 Storing tokens in localStorage for Authorization header approach...");
+            localStorage.setItem("penguinshift_access_token", callbackData.accessToken);
+            localStorage.setItem("penguinshift_refresh_token", callbackData.refreshToken);
+            console.log("✅ Tokens stored in localStorage");
+          } else {
+            console.warn("⚠️ No tokens in callback response - using cookie-based auth");
           }
           
-          // Last resort: use callback data directly
-          console.log("⚠️ Using callback data directly as last resort");
+          // Use callback data to set user in auth context
+          console.log("🔐 Setting user in auth context...");
           login(
             {
               name: callbackData.username || callbackData.name || "User",
@@ -233,8 +210,12 @@ export default function AuthRouter() {
               registeredWithMaster: callbackData.registeredWithMaster || false,
               isRestricted: callbackData.isRestricted || false,
             },
-            undefined
+            callbackData.accessToken // Pass token to auth context
           );
+          console.log("✅ User set in auth context");
+          console.log("═══════════════════════════════════════════════════════════");
+          console.log("✅ OAuth Callback: SUCCESS - Navigating to profile");
+          console.log("═══════════════════════════════════════════════════════════");
           navigate("/profile", { replace: true });
         } else {
           console.error("❌ Both /auth/me and /auth/oauth-callback failed:");
