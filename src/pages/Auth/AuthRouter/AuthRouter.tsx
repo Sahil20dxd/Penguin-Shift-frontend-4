@@ -30,9 +30,18 @@ export default function AuthRouter() {
     // Helper to refresh session from cookies and land on profile
     const finishAndGoProfile = async () => {
       try {
+        // Add a small delay to ensure cookies are available after OAuth redirect
+        // This is especially important for cross-origin requests where cookies
+        // are set by the backend during the redirect
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         const API_BASE = getApiBase(); // Get API base at runtime
         const res = await fetch(`${API_BASE}/auth/me`, {
+          method: "GET",
           credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
         });
         if (res.ok) {
           const data = await res.json();
