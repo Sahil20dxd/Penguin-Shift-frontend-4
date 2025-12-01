@@ -125,7 +125,10 @@ export default function TransferResults() {
           }
           
           // Fetch transfer history to get history ID for recommendations
-          fetchTransferHistoryId();
+          // Add small delay to ensure transfer history is saved in database
+          setTimeout(() => {
+            fetchTransferHistoryId();
+          }, 1000);
           
           return; // Exit immediately
         } else if (status === "IN_PROGRESS" || status === "RUNNING" || status === "PENDING") {
@@ -248,21 +251,51 @@ export default function TransferResults() {
     navigate(createPageUrl("SelectPlaylist"));
   };
 
-  const fetchTransferHistoryId = async () => {
+  const fetchTransferHistoryId = async (retryCount = 0) => {
     try {
+      console.log('[TransferResults] Fetching transfer history for transferId:', transferIdNum, `(attempt ${retryCount + 1})`);
       const histories = await getTransferHistory();
+      console.log('[TransferResults] Received transfer histories:', histories.length);
+      
       // Find the most recent history entry for this transfer
-      const matchingHistory = histories.find(h => h.transferId === transferIdNum);
+      let matchingHistory = histories.find(h => h.transferId === transferIdNum);
+      
+      // If no exact match, try the most recent one (might be the current transfer)
+      if (!matchingHistory && histories.length > 0) {
+        console.log('[TransferResults] No exact match found, using most recent history');
+        matchingHistory = histories[0]; // Most recent is first (ordered by created_at DESC)
+      }
+      
       if (matchingHistory) {
+        console.log('[TransferResults] Found matching history:', matchingHistory.id);
         setTransferHistoryId(matchingHistory.id);
         // Determine destination platform from history
         const platform = matchingHistory.destinationPlatform?.toLowerCase();
+        console.log('[TransferResults] Destination platform:', platform);
         if (platform === 'spotify' || platform === 'youtube') {
           setDestinationPlatform(platform);
+        } else {
+          console.warn('[TransferResults] Unknown destination platform:', platform);
+        }
+      } else {
+        // Retry up to 3 times with increasing delays if history not found yet
+        if (retryCount < 3) {
+          console.log('[TransferResults] No matching history found, retrying in', (retryCount + 1) * 2000, 'ms');
+          setTimeout(() => {
+            fetchTransferHistoryId(retryCount + 1);
+          }, (retryCount + 1) * 2000);
+        } else {
+          console.warn('[TransferResults] No matching transfer history found after', retryCount + 1, 'attempts');
         }
       }
     } catch (err) {
       console.error('[TransferResults] Error fetching transfer history:', err);
+      // Retry on error up to 2 times
+      if (retryCount < 2) {
+        setTimeout(() => {
+          fetchTransferHistoryId(retryCount + 1);
+        }, (retryCount + 1) * 2000);
+      }
       // Don't show error to user - recommendations are optional
     }
   };
