@@ -9,19 +9,18 @@ import PreviewPlayer from './PreviewPlayer';
 import { getRecommendations } from '@/api/recommendations';
 import type { RecommendedTrack } from '@/types/recommendations';
 import { useToast } from '@/hooks/useToast';
+import { apiJson } from '@/components/shift/apiClient';
 
 interface RecommendationSectionProps {
   transferHistoryId: number;
   destinationPlatform: 'spotify' | 'youtube';
   destinationPlaylistId?: string;
-  onAddToPlaylist?: (trackIds: string[]) => Promise<void>;
 }
 
 export default function RecommendationSection({
   transferHistoryId,
   destinationPlatform,
-  destinationPlaylistId,
-  onAddToPlaylist
+  destinationPlaylistId
 }: RecommendationSectionProps) {
   const [recommendations, setRecommendations] = useState<RecommendedTrack[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +37,7 @@ export default function RecommendationSection({
     setLoading(true);
     setError(null);
     try {
-      const data = await getRecommendations(transferHistoryId, 20);
+      const data = await getRecommendations(transferHistoryId, 10);
       setRecommendations(data);
     } catch (err: any) {
       console.error('[RecommendationSection] Error fetching recommendations:', err);
@@ -66,14 +65,23 @@ export default function RecommendationSection({
       return;
     }
 
-    if (!onAddToPlaylist) {
+    if (!destinationPlaylistId) {
       showToast('Playlist ID not available', 'error');
       return;
     }
 
     setAddingTracks(true);
     try {
-      await onAddToPlaylist(Array.from(selectedTracks));
+      const trackIds = Array.from(selectedTracks);
+      const payload = destinationPlatform === 'spotify' 
+        ? { playlistId: destinationPlaylistId, trackIds }
+        : { playlistId: destinationPlaylistId, videoIds: trackIds };
+
+      await apiJson(`/api/playlists/${destinationPlatform}/add-tracks`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
       showToast(`Successfully added ${selectedTracks.size} track(s) to playlist!`, 'success');
       setSelectedTracks(new Set());
       
@@ -239,18 +247,16 @@ export default function RecommendationSection({
                             {formatDuration(track.durationMs)}
                           </span>
                         )}
-                        {track.platform && (
-                          <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
-                            {track.platform === 'spotify' ? '🎵 Spotify' : '▶️ YouTube'}
-                          </span>
-                        )}
+                        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
+                          {destinationPlatform === 'spotify' ? '🎵 Spotify' : '▶️ YouTube'}
+                        </span>
                       </div>
                       <PreviewPlayer
                         previewUrl={track.previewUrl}
                         trackTitle={track.title}
                         artist={track.artist}
-                        platform={track.platform || destinationPlatform}
-                        videoId={track.platform === 'youtube' ? track.id : undefined}
+                        platform={destinationPlatform}
+                        videoId={destinationPlatform === 'youtube' ? track.id : undefined}
                       />
                     </div>
                   </CardContent>
@@ -263,4 +269,3 @@ export default function RecommendationSection({
     </motion.div>
   );
 }
-

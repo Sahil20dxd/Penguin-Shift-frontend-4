@@ -7,6 +7,4 @@ export interface RecommendedTrack {
   album?: string | null;
   durationMs?: number | null;
   previewUrl?: string | null; // Spotify 30-second preview URL
-  platform?: 'spotify' | 'youtube'; // Platform this track is from
 }
-

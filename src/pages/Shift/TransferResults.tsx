@@ -267,24 +267,6 @@ export default function TransferResults() {
     }
   };
 
-  const handleAddTracksToPlaylist = async (trackIds: string[]) => {
-    if (!transfer?.createdPlaylistId || !destinationPlatform) {
-      throw new Error('Playlist ID or platform not available');
-    }
-
-    const platform = destinationPlatform;
-    const playlistId = transfer.createdPlaylistId;
-
-    // Add tracks to playlist using platform-specific API
-    const payload = platform === 'spotify' 
-      ? { playlistId, trackIds }
-      : { playlistId, videoIds: trackIds }; // YouTube uses videoIds
-
-    await apiJson(`/api/playlists/destination/${platform}/add-tracks`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-  };
 
   // -------------------------------
   // UI States
@@ -596,8 +578,7 @@ export default function TransferResults() {
           <RecommendationSection
             transferHistoryId={transferHistoryId}
             destinationPlatform={destinationPlatform}
-            destinationPlaylistId={transfer?.createdPlaylistId}
-            onAddToPlaylist={handleAddTracksToPlaylist}
+            destinationPlaylistId={transfer?.createdPlaylistId || transfer?.destinationPlaylistId}
           />
         )}
 

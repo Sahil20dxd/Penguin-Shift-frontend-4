@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
 
 interface PreviewPlayerProps {
   previewUrl: string | null | undefined;
@@ -26,7 +25,6 @@ export default function PreviewPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Cleanup on unmount
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -37,7 +35,6 @@ export default function PreviewPlayer({
 
   const handlePlayPause = () => {
     if (!audioRef.current && previewUrl) {
-      // Create audio element if it doesn't exist
       const audio = new Audio(previewUrl);
       audio.volume = volume;
       audio.muted = isMuted;
@@ -150,9 +147,7 @@ export default function PreviewPlayer({
     );
   }
 
-  // No preview available
   return (
     <span className="text-xs text-gray-400 italic">Preview not available</span>
   );
 }
-
