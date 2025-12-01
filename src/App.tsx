@@ -29,6 +29,7 @@ const PublicPlaylistDestination = lazy(() => import("./pages/PublicPlaylistDesti
 const PublicPlaylistSelectDestination = lazy(() => import("./pages/PublicPlaylistSelectDestination"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService/TermsOfService"));
+const PublicPlaylistView = lazy(() => import("./pages/PublicPlaylistView"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Enhanced loading fallback component with animation
@@ -212,6 +213,14 @@ export default function App() {
               element={
                 <Layout currentPageName="TermsOfService">
                   <TermsOfService />
+                </Layout>
+              }
+            />
+            <Route
+              path="/p/:id"
+              element={
+                <Layout currentPageName="PublicPlaylist">
+                  <PublicPlaylistView />
                 </Layout>
               }
             />

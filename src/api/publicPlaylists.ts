@@ -118,6 +118,20 @@ export async function getExplorePublicPlaylists(
   }
 }
 
+/**
+ * Get a single public playlist by ID.
+ * This is a PUBLIC endpoint - no authentication required.
+ */
+export async function getPublicPlaylistById(id: number | string): Promise<PublicPlaylist> {
+  try {
+    const data = await apiJsonPublic(`/api/public-playlists/${id}`)
+    return normalizePublicPlaylist(data)
+  } catch (err: any) {
+    console.error('[getPublicPlaylistById] Error:', err)
+    throw err
+  }
+}
+
 export async function getMyPublicPlaylists(): Promise<PublicPlaylist[]> {
   const data = await apiJson('/api/public-playlists/mine')
   if (!Array.isArray(data)) return []

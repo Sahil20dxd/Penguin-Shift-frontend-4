@@ -3,7 +3,7 @@ import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Music2, Eye, Link2, Clock } from 'lucide-react'
+import { Music2, Link2, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PublicPlaylist } from '@/types/publicPlaylist'
 
@@ -75,7 +75,10 @@ export default function PlaylistCard({
       }}
       style={{ willChange: 'transform' }}
     >
-      <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-200 cursor-pointer group">
+      <Card 
+        className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-200 cursor-pointer group"
+        onClick={() => onViewDetails(playlist)}
+      >
         {/* Cover image */}
         <div className="relative aspect-square bg-gradient-to-br from-purple-400 via-pink-300 to-blue-400 overflow-hidden">
           {playlist.coverUrl ? (
@@ -102,29 +105,13 @@ export default function PlaylistCard({
             </div>
           )}
 
-          {/* Hover overlay actions - Always visible on mobile for better UX */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center pb-3 md:pb-4 gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          >
+          {/* Hover overlay - Copy link button (only for public playlists) */}
+          {playlist.isPublic && (
             <motion.div 
-              whileHover={{ scale: 1.05 }} 
-              whileTap={{ scale: 0.92 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+              className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center pb-3 md:pb-4 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => onViewDetails(playlist)}
-                className="bg-white/95 hover:bg-white shadow-lg text-sm md:text-xs py-2 md:py-1.5 px-3 md:px-2 min-h-[44px] md:min-h-0"
-              >
-                <Eye className="w-4 h-4 md:w-3 md:h-3 mr-1.5 md:mr-1" />
-                <span className="md:hidden">View</span>
-              </Button>
-            </motion.div>
-
-            {playlist.isPublic && (
               <motion.div 
                 whileHover={{ scale: 1.05 }} 
                 whileTap={{ scale: 0.92 }}
@@ -143,8 +130,8 @@ export default function PlaylistCard({
                   <Link2 className="w-4 h-4 md:w-3 md:h-3" />
                 </Button>
               </motion.div>
-            )}
-          </motion.div>
+            </motion.div>
+          )}
         </div>
 
         {/* Content */}
