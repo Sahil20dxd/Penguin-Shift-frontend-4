@@ -14,13 +14,21 @@ export async function apiJson(path: string, options: RequestInit = {}) {
   const method = (options.method || 'GET').toUpperCase()
   const isStateChanging = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)
   
-  // Add Authorization header if token is available (primary method for cross-origin)
+  // Always try to get token from localStorage (primary method for cross-origin)
   const accessToken = localStorage.getItem("penguinshift_access_token")
-  const headers = addCsrfToken({
+  
+  // Build headers - always include Authorization if token exists
+  const baseHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
-    ...(options.headers || {})
-  })
+    ...(options.headers as Record<string, string> || {})
+  }
+  
+  // Add Authorization header if token is available
+  if (accessToken) {
+    baseHeaders['Authorization'] = `Bearer ${accessToken}`
+  }
+  
+  const headers = addCsrfToken(baseHeaders)
   
   let res = await fetch(API_BASE + path, {
     ...options,
@@ -43,11 +51,19 @@ export async function apiJson(path: string, options: RequestInit = {}) {
       }
     }
 
+    // Retry: Get fresh token in case it was updated
+    const freshToken = localStorage.getItem("penguinshift_access_token") || accessToken
+    
     const retryHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
       ...(options.headers as Record<string, string> || {})
     }
+    
+    // Always add Authorization header if token exists
+    if (freshToken) {
+      retryHeaders['Authorization'] = `Bearer ${freshToken}`
+    }
+    
     if (csrfToken) {
       retryHeaders['X-CSRF-TOKEN'] = csrfToken
     }
