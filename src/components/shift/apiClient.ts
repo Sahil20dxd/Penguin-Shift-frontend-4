@@ -23,16 +23,40 @@ export async function apiJson(path: string, options: RequestInit = {}) {
     ...(options.headers as Record<string, string> || {})
   }
   
-  // Add Authorization header if token is available
+  // CRITICAL: Always add Authorization header if token is available
+  // Do this BEFORE merging with options.headers to ensure it's not overwritten
   if (accessToken) {
     baseHeaders['Authorization'] = `Bearer ${accessToken}`
+    console.log(`[apiJson] ✅ Adding Authorization header for ${path}`)
+  } else {
+    console.warn(`[apiJson] ⚠️ No access token found in localStorage for ${path}`)
   }
   
-  const headers = addCsrfToken(baseHeaders)
+  // Merge with any headers from options (but don't let them overwrite Authorization)
+  const mergedHeaders = { ...baseHeaders, ...(options.headers as Record<string, string> || {}) }
+  // Ensure Authorization is always set if we have a token
+  if (accessToken && !mergedHeaders['Authorization']) {
+    mergedHeaders['Authorization'] = `Bearer ${accessToken}`
+  }
+  
+  const headers = addCsrfToken(mergedHeaders)
   
   // Debug: Log if Authorization header is being sent (only in development)
-  if (import.meta.env.DEV && accessToken) {
-    console.log(`[apiJson] Sending request to ${path} with Authorization header`)
+  if (import.meta.env.DEV) {
+    console.log(`[apiJson] Request to ${path}:`, {
+      hasToken: !!accessToken,
+      hasAuthHeader: !!headers['Authorization'],
+      method: options.method || 'GET'
+    })
+  }
+  
+  // Log final headers being sent (in dev mode)
+  if (import.meta.env.DEV) {
+    console.log(`[apiJson] Final headers for ${path}:`, {
+      hasAuthorization: !!headers['Authorization'],
+      hasContentType: !!headers['Content-Type'],
+      hasCsrf: !!headers['X-CSRF-TOKEN']
+    })
   }
   
   let res = await fetch(API_BASE + path, {
@@ -40,6 +64,11 @@ export async function apiJson(path: string, options: RequestInit = {}) {
     credentials: 'include',
     headers
   })
+  
+  // Log response status
+  if (import.meta.env.DEV) {
+    console.log(`[apiJson] Response for ${path}:`, res.status, res.statusText)
+  }
 
   // Retry with CSRF token if 401 on state-changing operations
   if (!res.ok && res.status === 401 && isStateChanging) {
@@ -59,14 +88,19 @@ export async function apiJson(path: string, options: RequestInit = {}) {
     // Retry: Get fresh token in case it was updated
     const freshToken = localStorage.getItem("penguinshift_access_token") || accessToken
     
+    console.log(`[apiJson] Retrying ${path} after 401. Has token:`, !!freshToken)
+    
     const retryHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {})
     }
     
-    // Always add Authorization header if token exists
+    // CRITICAL: Always add Authorization header if token exists
     if (freshToken) {
       retryHeaders['Authorization'] = `Bearer ${freshToken}`
+      console.log(`[apiJson] ✅ Adding Authorization header to retry for ${path}`)
+    } else {
+      console.error(`[apiJson] ❌ No token available for retry on ${path}`)
     }
     
     if (csrfToken) {

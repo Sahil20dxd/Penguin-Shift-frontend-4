@@ -34,7 +34,9 @@ export interface TransferHistoryDetailResponse {
   transferId: number;
   sourcePlatform: string;
   destinationPlatform: string;
+  sourcePlaylistId?: string;
   sourcePlaylistName: string;
+  destinationPlaylistId?: string;
   destinationPlaylistName: string;
   totalTracks: number;
   matchedTracks: number;

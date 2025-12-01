@@ -79,13 +79,20 @@ export default function RecommendationSection({
   };
 
   const handleAddSelected = async () => {
+    console.log('[RecommendationSection] ===== ADDING SELECTED TRACKS =====')
+    console.log('[RecommendationSection] Selected tracks:', Array.from(selectedTracks))
+    console.log('[RecommendationSection] destinationPlaylistId:', destinationPlaylistId)
+    console.log('[RecommendationSection] destinationPlatform:', destinationPlatform)
+    
     if (selectedTracks.size === 0) {
+      console.warn('[RecommendationSection] No tracks selected')
       showToast('Please select at least one track to add', 'warning');
       return;
     }
 
     if (!destinationPlaylistId) {
-      showToast('Playlist ID not available', 'error');
+      console.error('[RecommendationSection] ❌ destinationPlaylistId is not available')
+      showToast('Playlist ID not available. Please wait for the transfer to complete.', 'error');
       return;
     }
 
@@ -198,7 +205,8 @@ export default function RecommendationSection({
           <Button
             onClick={handleAddSelected}
             disabled={addingTracks || !destinationPlaylistId}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!destinationPlaylistId ? 'Playlist ID not available. Please wait for transfer to complete.' : 'Add selected tracks to playlist'}
           >
             {addingTracks ? (
               <>

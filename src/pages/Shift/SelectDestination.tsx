@@ -28,7 +28,7 @@ import {
   downloadUnmatchedPdf
 } from '@/components/shift/apiClient'
 import RecommendationSection from '@/components/recommendations/RecommendationSection'
-import { getTransferHistory } from '@/api/transferHistory'
+import { getTransferHistory, getTransferHistoryDetails } from '@/api/transferHistory'
 import { useShift } from '@/components/shift/ShiftContext'
 import {
   Loader2,
@@ -254,6 +254,17 @@ export default function SelectDestination() {
     setCreating(true)
     setError(null)
     try {
+      console.log('[SelectDestination] ===== STARTING TRANSFER =====')
+      console.log('[SelectDestination] Payload:', {
+        sourcePlatform: sourcePlatform || 'spotify',
+        destinationPlatform,
+        playlistIds: selectedPlaylistIds,
+        createNew: makeNewPlaylist,
+        newPlaylistName: playlistName,
+        genre: selectedGenre,
+        makePublic: makePublic
+      })
+      
       const payload = {
         sourcePlatform: sourcePlatform || 'spotify',
         destinationPlatform,
@@ -271,6 +282,8 @@ export default function SelectDestination() {
         id: number
         createdPlaylistId?: string
       }
+      
+      console.log('[SelectDestination] Transfer started. Response:', res)
 
       setTransferId(res.id)
       setTransferStatus('PENDING')
@@ -294,12 +307,21 @@ export default function SelectDestination() {
             phase: string
             unmatched: number
             createdPlaylistId?: string
+            destinationPlaylistId?: string
           }
+          console.log('[SelectDestination] Transfer status response:', st)
           setTransferPhase(st.phase)
           setTransferPct(st.percent)
           setTransferStatus(st.status)
           setUnmatchedCount(st.unmatched || 0)
-          if (st.createdPlaylistId) setCreatedPlaylistId(st.createdPlaylistId)
+          // Set createdPlaylistId from either createdPlaylistId or destinationPlaylistId
+          if (st.createdPlaylistId) {
+            console.log('[SelectDestination] Setting createdPlaylistId from status:', st.createdPlaylistId)
+            setCreatedPlaylistId(st.createdPlaylistId)
+          } else if (st.destinationPlaylistId) {
+            console.log('[SelectDestination] Setting createdPlaylistId from destinationPlaylistId:', st.destinationPlaylistId)
+            setCreatedPlaylistId(st.destinationPlaylistId)
+          }
 
           if (st.status === 'COMPLETED' || st.status === 'FAILED') {
             console.log('[SelectDestination] Transfer status changed to:', st.status)
@@ -325,10 +347,27 @@ export default function SelectDestination() {
         }
       }, 1200) as unknown as number
     } catch (e: any) {
-      console.error('Transfer start failed:', e)
-      setError(
-        'We couldn’t start the transfer. Please check your connection and try again.'
-      )
+      console.error('[SelectDestination] Transfer start failed:', e)
+      const errorMessage = e?.message || String(e)
+      console.error('[SelectDestination] Error details:', {
+        message: errorMessage,
+        status: e?.status,
+        response: e?.response
+      })
+      
+      // Handle 401 Unauthorized - user needs to re-authenticate
+      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || e?.status === 401) {
+        setError('Your session has expired. Please log in again and try again.')
+        console.error('[SelectDestination] ❌ Authentication expired - user needs to log in again')
+        // Optionally redirect to login after a delay
+        setTimeout(() => {
+          window.location.href = '/auth'
+        }, 3000)
+      } else {
+        setError(
+          'We couldn't start the transfer. Please check your connection and try again.'
+        )
+      }
     } finally {
       setCreating(false)
     }
@@ -385,7 +424,30 @@ export default function SelectDestination() {
       if (matchingHistory) {
         console.log('[SelectDestination] ✅ Setting transferHistoryId to:', matchingHistory.id)
         console.log('[SelectDestination] Destination platform:', matchingHistory.destinationPlatform)
+        console.log('[SelectDestination] Transfer history data:', matchingHistory)
         setTransferHistoryId(matchingHistory.id)
+        
+        // Also try to get destinationPlaylistId from transfer history if createdPlaylistId is not set
+        // First check if we have it in the history response
+        if (!createdPlaylistId) {
+          // Try to get it from transfer history details
+          try {
+            console.log('[SelectDestination] Fetching transfer history details to get playlist ID...')
+            const historyDetails = await getTransferHistoryDetails(matchingHistory.id)
+            console.log('[SelectDestination] Transfer history details:', historyDetails)
+            if (historyDetails?.destinationPlaylistId) {
+              console.log('[SelectDestination] ✅ Setting createdPlaylistId from history details:', historyDetails.destinationPlaylistId)
+              setCreatedPlaylistId(historyDetails.destinationPlaylistId)
+            } else {
+              console.warn('[SelectDestination] ⚠️ destinationPlaylistId not found in history details')
+            }
+          } catch (err) {
+            console.error('[SelectDestination] ❌ Could not fetch history details for playlist ID:', err)
+          }
+        } else {
+          console.log('[SelectDestination] createdPlaylistId already set:', createdPlaylistId)
+        }
+        
         console.log('[SelectDestination] State updated. Recommendation section should appear if transferStatus is COMPLETED')
       } else {
         // Retry up to 3 times with increasing delays if history not found yet
@@ -778,6 +840,7 @@ export default function SelectDestination() {
                       </div>
                     ) : null
                   })()}
+                  
 
                   {/* Debug Panel - Remove in production */}
                   {import.meta.env.DEV && transferId && (
