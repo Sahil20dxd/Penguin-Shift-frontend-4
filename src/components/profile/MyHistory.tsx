@@ -280,7 +280,7 @@ export default function MyHistory() {
                             disabled={togglingIds.has(transfer.id)}
                             aria-label={transfer.isPublic ? "Make private" : "Make public"}
                           />
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-gray-600 font-medium">
                             {transfer.isPublic ? "Public" : "Private"}
                           </span>
                           {togglingIds.has(transfer.id) && (
@@ -379,7 +379,7 @@ export default function MyHistory() {
                         disabled={togglingIds.has(transfer.id)}
                         aria-label={transfer.isPublic ? "Make private" : "Make public"}
                       />
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-gray-600 font-medium">
                         {transfer.isPublic ? "Public" : "Private"}
                       </span>
                       {togglingIds.has(transfer.id) && (
