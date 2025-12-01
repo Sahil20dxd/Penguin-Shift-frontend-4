@@ -3,7 +3,6 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
-import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
 
@@ -59,6 +58,16 @@ class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
     });
+    // Force a page reload to ensure clean state
+    window.location.reload();
+  };
+
+  handleGoHome = () => {
+    window.location.href = createPageUrl("LandingPage");
+  };
+
+  handleContactSupport = () => {
+    window.location.href = "/contact";
   };
 
   render() {
@@ -119,23 +128,25 @@ class ErrorBoundary extends Component<Props, State> {
               </motion.div>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link to={createPageUrl("LandingPage")}>
-                  <Button variant="outline" size="lg">
-                    <Home className="w-4 h-4 mr-2" />
-                    Go Home
-                  </Button>
-                </Link>
+                <Button
+                  onClick={this.handleGoHome}
+                  variant="outline"
+                  size="lg"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Go Home
+                </Button>
               </motion.div>
             </div>
 
             <p className="text-center text-sm text-gray-500 mt-6">
               If this problem persists, please{" "}
-              <Link
-                to="/contact"
-                className="text-purple-600 hover:underline font-medium"
+              <button
+                onClick={this.handleContactSupport}
+                className="text-purple-600 hover:underline font-medium cursor-pointer"
               >
                 contact support
-              </Link>
+              </button>
             </p>
           </div>
         </motion.div>

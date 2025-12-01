@@ -15,6 +15,8 @@ import PlaylistCard from "@/components/explore/PlaylistCard";
 import Pagination from "@/components/explore/Pagination";
 import PlaylistDetailsDrawer from "@/components/explore/PlaylistDetailsDrawer";
 import type { PublicPlaylist } from "@/types/publicPlaylist";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { SEOHead } from "@/components/SEOHead";
 
 type FiltersState = {
   platform: string;
