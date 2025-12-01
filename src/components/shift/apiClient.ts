@@ -30,6 +30,11 @@ export async function apiJson(path: string, options: RequestInit = {}) {
   
   const headers = addCsrfToken(baseHeaders)
   
+  // Debug: Log if Authorization header is being sent (only in development)
+  if (import.meta.env.DEV && accessToken) {
+    console.log(`[apiJson] Sending request to ${path} with Authorization header`)
+  }
+  
   let res = await fetch(API_BASE + path, {
     ...options,
     credentials: 'include',
