@@ -132,6 +132,20 @@ export async function getPublicPlaylistById(id: number | string): Promise<Public
   }
 }
 
+/**
+ * Get tracks for a public playlist by ID.
+ * This is a PUBLIC endpoint - no authentication required.
+ */
+export async function getPublicPlaylistTracks(id: number | string): Promise<any[]> {
+  try {
+    const data = await apiJsonPublic(`/api/public-playlists/${id}/tracks`)
+    return Array.isArray(data) ? data : []
+  } catch (err: any) {
+    console.error('[getPublicPlaylistTracks] Error:', err)
+    throw err
+  }
+}
+
 export async function getMyPublicPlaylists(): Promise<PublicPlaylist[]> {
   const data = await apiJson('/api/public-playlists/mine')
   if (!Array.isArray(data)) return []

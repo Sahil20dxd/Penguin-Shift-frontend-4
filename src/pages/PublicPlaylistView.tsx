@@ -9,9 +9,7 @@ import { useToast } from "@/hooks/useToast";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { SEOHead } from "@/components/SEOHead";
 import type { PublicPlaylist } from "@/types/publicPlaylist";
-import { getPublicPlaylistById } from "@/api/publicPlaylists";
-import { getTransferHistoryTracksByTransferId } from "@/api/transferHistory";
-import type { TransferHistoryTrackResponse } from "@/types/transferHistory";
+import { getPublicPlaylistById, getPublicPlaylistTracks } from "@/api/publicPlaylists";
 import { motion } from "framer-motion";
 import { format } from 'date-fns';
 
@@ -57,7 +55,7 @@ export default function PublicPlaylistView() {
   const navigate = useNavigate();
   const { showToast, Toast } = useToast();
   const [playlist, setPlaylist] = useState<PublicPlaylist | null>(null);
-  const [tracks, setTracks] = useState<TransferHistoryTrackResponse[]>([]);
+  const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingTracks, setLoadingTracks] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,8 +95,8 @@ export default function PublicPlaylistView() {
   // Fetch tracks when playlist is loaded
   useEffect(() => {
     const fetchTracks = async () => {
-      if (!playlist?.transferId) {
-        console.log('[PublicPlaylistView] No transferId, skipping track fetch');
+      if (!playlist?.id) {
+        console.log('[PublicPlaylistView] No playlist ID, skipping track fetch');
         return;
       }
 
@@ -107,14 +105,14 @@ export default function PublicPlaylistView() {
       setTracks([]);
 
       try {
-        console.log('[PublicPlaylistView] Fetching tracks for transferId:', playlist.transferId);
-        const fetchedTracks = await getTransferHistoryTracksByTransferId(playlist.transferId);
+        console.log('[PublicPlaylistView] Fetching tracks for public playlist ID:', playlist.id);
+        const fetchedTracks = await getPublicPlaylistTracks(playlist.id);
         console.log('[PublicPlaylistView] Successfully fetched tracks:', fetchedTracks.length);
         setTracks(fetchedTracks);
       } catch (error: any) {
         console.error('[PublicPlaylistView] Error fetching tracks:', error);
         if (error.message?.includes('401')) {
-          setTracksError('Please log in to view track details');
+          setTracksError('Track details not available');
         } else if (error.message?.includes('404')) {
           setTracksError('Track details not available');
         } else {
@@ -148,11 +146,20 @@ export default function PublicPlaylistView() {
     console.log('[PublicPlaylistView] Add to library clicked for playlist:', playlist.title);
     console.log('[PublicPlaylistView] Including tracks:', tracks.length);
 
+    // Convert tracks to format expected by PublicPlaylistDestination
+    const formattedTracks = tracks.map(track => ({
+      destinationTrackTitle: track.title,
+      destinationTrackArtist: track.artist,
+      destinationTrackDurationSec: track.durationSec,
+      sourceTrackTitle: track.title,
+      sourceTrackArtist: track.artist,
+    }));
+
     // Navigate to the public playlist destination page with the selected playlist data and tracks
     navigate('/shift/public-destination', {
       state: {
         playlist,
-        tracks
+        tracks: formattedTracks
       },
     });
   };
@@ -370,15 +377,15 @@ export default function PublicPlaylistView() {
                         </span>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">
-                            {track.destinationTrackTitle || track.sourceTrackTitle || 'Unknown Track'}
+                            {track.title || 'Unknown Track'}
                           </p>
                           <p className="text-sm text-gray-600 truncate">
-                            {track.destinationTrackArtist || track.sourceTrackArtist || 'Unknown Artist'}
+                            {track.artist || 'Unknown Artist'}
                           </p>
                         </div>
-                        {track.destinationTrackDurationSec && (
+                        {track.durationSec && (
                           <span className="text-sm text-gray-500">
-                            {formatDuration(track.destinationTrackDurationSec)}
+                            {formatDuration(track.durationSec)}
                           </span>
                         )}
                       </motion.div>
