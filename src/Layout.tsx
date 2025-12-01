@@ -53,7 +53,6 @@ const navigationItems: NavItem[] = [
   // New nav item: Explore public playlists
   { title: "Explore", url: "/explore", icon: Globe2 },
   { title: "Contact Us", url: createPageUrl("Contact"), icon: Mail },
-  { title: "Profile", url: createPageUrl("Profile"), icon: User },
 ];
 
 interface LayoutProps {
@@ -106,19 +105,17 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
       </motion.div>
     );
 
-  // Hide "Profile" if not logged in
   // Hide "Shift" if user is admin (they can't perform transfers)
   // Note: Admin and Curator roles are treated the same
   const filteredNavItems = user
     ? navigationItems.filter((item) => {
-        if (item.title === "Profile") return true;
         if (item.title === "Shift") {
           const isAdmin = user?.role === 'ADMIN' || user?.role === 'CURATOR' || user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_CURATOR';
           return !isAdmin; // Hide Shift for admins
         }
         return true;
       })
-    : navigationItems.filter((item) => item.title !== "Profile");
+    : navigationItems;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
