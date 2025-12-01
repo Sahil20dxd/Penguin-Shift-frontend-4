@@ -290,10 +290,13 @@ export default function SelectDestination() {
           if (st.createdPlaylistId) setCreatedPlaylistId(st.createdPlaylistId)
 
           if (st.status === 'COMPLETED' || st.status === 'FAILED') {
+            console.log('[SelectDestination] Transfer status changed to:', st.status)
             if (pollRef.current) window.clearInterval(pollRef.current)
             // Fetch transfer history ID for recommendations when transfer completes
             if (st.status === 'COMPLETED') {
+              console.log('[SelectDestination] Transfer completed, will fetch history ID in 1 second. TransferId:', res.id)
               setTimeout(() => {
+                console.log('[SelectDestination] Calling fetchTransferHistoryId for transferId:', res.id)
                 fetchTransferHistoryId()
               }, 1000)
             }
@@ -340,42 +343,57 @@ export default function SelectDestination() {
 
   // Fetch transfer history ID for recommendations
   const fetchTransferHistoryId = async (retryCount = 0) => {
-    if (!transferId) return
+    if (!transferId) {
+      console.warn('[SelectDestination] fetchTransferHistoryId called but transferId is null')
+      return
+    }
     try {
-      console.log('[SelectDestination] Fetching transfer history for transferId:', transferId, `(attempt ${retryCount + 1})`)
+      console.log('[SelectDestination] ===== FETCHING TRANSFER HISTORY =====')
+      console.log('[SelectDestination] TransferId:', transferId, `| Attempt: ${retryCount + 1}`)
       const histories = await getTransferHistory()
-      console.log('[SelectDestination] Received transfer histories:', histories.length)
+      console.log('[SelectDestination] Received transfer histories count:', histories.length)
+      console.log('[SelectDestination] All histories:', histories.map(h => ({ id: h.id, transferId: h.transferId, destinationPlatform: h.destinationPlatform })))
       
       // Find the most recent history entry for this transfer
       let matchingHistory = histories.find(h => h.transferId === transferId)
+      console.log('[SelectDestination] Exact match found:', matchingHistory ? `Yes (ID: ${matchingHistory.id})` : 'No')
       
       // If no exact match, try the most recent one (might be the current transfer)
       if (!matchingHistory && histories.length > 0) {
-        console.log('[SelectDestination] No exact match found, using most recent history')
+        console.log('[SelectDestination] No exact match found, using most recent history (ID:', histories[0].id, ')')
         matchingHistory = histories[0] // Most recent is first (ordered by created_at DESC)
       }
       
       if (matchingHistory) {
-        console.log('[SelectDestination] Found matching history:', matchingHistory.id)
+        console.log('[SelectDestination] ✅ Setting transferHistoryId to:', matchingHistory.id)
+        console.log('[SelectDestination] Destination platform:', matchingHistory.destinationPlatform)
         setTransferHistoryId(matchingHistory.id)
+        console.log('[SelectDestination] State updated. Recommendation section should appear if transferStatus is COMPLETED')
       } else {
         // Retry up to 3 times with increasing delays if history not found yet
         if (retryCount < 3) {
-          console.log('[SelectDestination] No matching history found, retrying in', (retryCount + 1) * 2000, 'ms')
+          console.log('[SelectDestination] ⚠️ No matching history found, retrying in', (retryCount + 1) * 2000, 'ms')
           setTimeout(() => {
             fetchTransferHistoryId(retryCount + 1)
           }, (retryCount + 1) * 2000)
         } else {
-          console.warn('[SelectDestination] No matching transfer history found after', retryCount + 1, 'attempts')
+          console.error('[SelectDestination] ❌ No matching transfer history found after', retryCount + 1, 'attempts')
         }
       }
     } catch (err) {
-      console.error('[SelectDestination] Error fetching transfer history:', err)
+      console.error('[SelectDestination] ❌ Error fetching transfer history:', err)
+      console.error('[SelectDestination] Error details:', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      })
       // Retry on error up to 2 times
       if (retryCount < 2) {
+        console.log('[SelectDestination] Retrying after error in', (retryCount + 1) * 2000, 'ms')
         setTimeout(() => {
           fetchTransferHistoryId(retryCount + 1)
         }, (retryCount + 1) * 2000)
+      } else {
+        console.error('[SelectDestination] ❌ Failed to fetch transfer history after', retryCount + 1, 'attempts')
       }
     }
   }
@@ -723,13 +741,40 @@ export default function SelectDestination() {
                   )}
 
                   {/* Recommendations Section - Show when transfer is completed */}
-                  {transferStatus === 'COMPLETED' && transferHistoryId && (
-                    <div className='mt-8 border-t pt-6'>
-                      <RecommendationSection
-                        transferHistoryId={transferHistoryId}
-                        destinationPlatform={destinationPlatform}
-                        destinationPlaylistId={createdPlaylistId || undefined}
-                      />
+                  {(() => {
+                    const shouldShow = transferStatus === 'COMPLETED' && transferHistoryId
+                    console.log('[SelectDestination] Recommendation Section Render Check:', {
+                      transferStatus,
+                      transferHistoryId,
+                      destinationPlatform,
+                      createdPlaylistId,
+                      shouldShow
+                    })
+                    return shouldShow ? (
+                      <div className='mt-8 border-t pt-6'>
+                        <RecommendationSection
+                          transferHistoryId={transferHistoryId}
+                          destinationPlatform={destinationPlatform}
+                          destinationPlaylistId={createdPlaylistId || undefined}
+                        />
+                      </div>
+                    ) : null
+                  })()}
+
+                  {/* Debug Panel - Remove in production */}
+                  {import.meta.env.DEV && transferId && (
+                    <div className='mt-4 p-4 bg-gray-100 rounded text-xs font-mono'>
+                      <div className='font-bold mb-2'>[DEBUG] Recommendation Section State:</div>
+                      <div>transferStatus: <span className={transferStatus === 'COMPLETED' ? 'text-green-600' : 'text-red-600'}>{transferStatus}</span></div>
+                      <div>transferHistoryId: <span className={transferHistoryId ? 'text-green-600' : 'text-red-600'}>{transferHistoryId || 'null'}</span></div>
+                      <div>destinationPlatform: <span className='text-blue-600'>{destinationPlatform}</span></div>
+                      <div>createdPlaylistId: <span className={createdPlaylistId ? 'text-green-600' : 'text-gray-500'}>{createdPlaylistId || 'null'}</span></div>
+                      <div>transferId: <span className='text-blue-600'>{transferId}</span></div>
+                      <div className='mt-2 pt-2 border-t border-gray-300'>
+                        Should show recommendations: <span className={transferStatus === 'COMPLETED' && transferHistoryId ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                          {transferStatus === 'COMPLETED' && transferHistoryId ? 'YES ✅' : 'NO ❌'}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </motion.div>

@@ -30,20 +30,39 @@ export default function RecommendationSection({
   const { showToast } = useToast();
 
   useEffect(() => {
-    fetchRecommendations();
+    console.log('[RecommendationSection] useEffect triggered. transferHistoryId:', transferHistoryId)
+    if (transferHistoryId) {
+      console.log('[RecommendationSection] Fetching recommendations for transferHistoryId:', transferHistoryId)
+      fetchRecommendations();
+    } else {
+      console.warn('[RecommendationSection] transferHistoryId is null/undefined, skipping fetch')
+    }
   }, [transferHistoryId]);
 
   const fetchRecommendations = async () => {
+    console.log('[RecommendationSection] ===== FETCHING RECOMMENDATIONS =====')
+    console.log('[RecommendationSection] transferHistoryId:', transferHistoryId)
+    console.log('[RecommendationSection] destinationPlatform:', destinationPlatform)
+    console.log('[RecommendationSection] destinationPlaylistId:', destinationPlaylistId)
     setLoading(true);
     setError(null);
     try {
+      console.log('[RecommendationSection] Calling getRecommendations API...')
       const data = await getRecommendations(transferHistoryId, 10);
+      console.log('[RecommendationSection] ✅ Received recommendations:', data.length, 'tracks')
+      console.log('[RecommendationSection] Recommendations data:', data)
       setRecommendations(data);
     } catch (err: any) {
-      console.error('[RecommendationSection] Error fetching recommendations:', err);
+      console.error('[RecommendationSection] ❌ Error fetching recommendations:', err);
+      console.error('[RecommendationSection] Error details:', {
+        message: err?.message,
+        stack: err?.stack,
+        response: err?.response
+      });
       setError('Failed to load recommendations. Please try again later.');
     } finally {
       setLoading(false);
+      console.log('[RecommendationSection] Fetch complete. Loading set to false.')
     }
   };
 
