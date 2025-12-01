@@ -7,7 +7,9 @@
 // --------------------------------------------------------------------
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -36,7 +38,9 @@ import {
   ArrowLeft,
   Globe,
   Check,
-  X
+  X,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react'
 import { createPageUrl } from '@/utils'
 import { checkPublicPlaylistNameAvailability } from '@/api/publicPlaylists'
@@ -85,11 +89,13 @@ export default function SelectDestination() {
   const [transferId, setTransferId] = useState<number | null>(null)
   const [transferPhase, setTransferPhase] = useState('Idle')
   const [transferPct, setTransferPct] = useState(0)
+  const [transferStatus, setTransferStatus] = useState<string>('IDLE')
   const [unmatchedCount, setUnmatchedCount] = useState(0)
   const [destPlaylists, setDestPlaylists] = useState<DestPlaylist[]>([])
   const [createdPlaylistId, setCreatedPlaylistId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const pollRef = useRef<number | null>(null)
+  const transferStatusRef = useRef<HTMLDivElement>(null)
 
   // ✅ On mount, check destination link
   useEffect(() => {
@@ -264,7 +270,16 @@ export default function SelectDestination() {
       }
 
       setTransferId(res.id)
+      setTransferStatus('PENDING')
       if (res.createdPlaylistId) setCreatedPlaylistId(res.createdPlaylistId)
+
+      // Scroll to transfer status section
+      setTimeout(() => {
+        transferStatusRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        })
+      }, 100)
 
       // Begin polling status
       if (pollRef.current) window.clearInterval(pollRef.current)
@@ -279,6 +294,7 @@ export default function SelectDestination() {
           }
           setTransferPhase(st.phase)
           setTransferPct(st.percent)
+          setTransferStatus(st.status)
           setUnmatchedCount(st.unmatched || 0)
           if (st.createdPlaylistId) setCreatedPlaylistId(st.createdPlaylistId)
 
@@ -288,6 +304,13 @@ export default function SelectDestination() {
               items?: DestPlaylist[]
             }
             setDestPlaylists(dest?.items || [])
+            // Scroll to show completion message
+            setTimeout(() => {
+              transferStatusRef.current?.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+              })
+            }, 200)
           }
         } catch {
           if (pollRef.current) window.clearInterval(pollRef.current)
@@ -333,7 +356,12 @@ export default function SelectDestination() {
     destinationPlatform === 'youtube' ? 'YouTube Music' : 'Spotify'
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6'>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className='min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6'
+    >
       <div className='max-w-4xl mx-auto'>
         <div className='mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
           <h1 className='text-2xl md:text-3xl font-bold text-gray-900'>Select Destination</h1>
@@ -548,12 +576,91 @@ export default function SelectDestination() {
               </div>
 
               {transferId && (
-                <div className='mt-8 border-t pt-6'>
-                  <div className='text-sm text-gray-600 mb-2'>
-                    Transfer #{transferId} • Phase:{' '}
-                    <span className='font-medium'>{transferPhase}</span> •{' '}
-                    {transferPct}%
-                  </div>
+                <motion.div
+                  ref={transferStatusRef}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className='mt-8 border-t pt-6'
+                >
+                  {/* Status Message */}
+                  <AnimatePresence mode="wait">
+                    {transferStatus === 'PENDING' || transferStatus === 'IN_PROGRESS' || transferStatus === 'RUNNING' ? (
+                      <motion.div
+                        key="in-progress"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className='mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg'
+                      >
+                        <div className='flex items-center gap-3'>
+                          <Loader2 className='w-5 h-5 text-blue-600 animate-spin' />
+                          <div>
+                            <p className='font-semibold text-blue-900'>Transfer has started</p>
+                            <p className='text-sm text-blue-700'>Your playlists are being transferred...</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : transferStatus === 'COMPLETED' ? (
+                      <motion.div
+                        key="completed"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className='mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg'
+                      >
+                        <div className='flex items-center gap-3'>
+                          <CheckCircle className='w-5 h-5 text-green-600' />
+                          <div>
+                            <p className='font-semibold text-green-900'>
+                              Transfer has completed successfully
+                              {unmatchedCount > 0 && (
+                                <span className='font-normal'> with {unmatchedCount} unmatched song{unmatchedCount !== 1 ? 's' : ''}</span>
+                              )}
+                            </p>
+                            <p className='text-sm text-green-700'>Your playlist is ready on {destName}!</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : transferStatus === 'FAILED' ? (
+                      <motion.div
+                        key="failed"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className='mb-4 p-4 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg'
+                      >
+                        <div className='flex items-center gap-3'>
+                          <AlertCircle className='w-5 h-5 text-red-600' />
+                          <div>
+                            <p className='font-semibold text-red-900'>Transfer failed</p>
+                            <p className='text-sm text-red-700'>Please try again or reconnect your account</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+
+                  {/* Progress Bar */}
+                  {(transferStatus === 'PENDING' || transferStatus === 'IN_PROGRESS' || transferStatus === 'RUNNING' || transferStatus === 'COMPLETED') && (
+                    <div className='mb-4'>
+                      <div className='flex items-center justify-between mb-2'>
+                        <div className='text-sm font-medium text-gray-700'>
+                          {transferPhase}
+                        </div>
+                        <div className='text-sm font-semibold text-purple-600'>
+                          {transferPct}%
+                        </div>
+                      </div>
+                      <Progress 
+                        value={transferPct} 
+                        className='h-3 bg-gray-200'
+                      />
+                      <div className='text-xs text-gray-500 mt-1'>
+                        Transfer #{transferId}
+                      </div>
+                    </div>
+                  )}
 
                   {destPlaylists.length > 0 && (
                     <div className='space-y-2'>
@@ -620,12 +727,12 @@ export default function SelectDestination() {
                       <Download className='w-4 h-4 mr-2' /> PDF
                     </Button>
                   </div>
-                </div>
+                </motion.div>
               )}
             </>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

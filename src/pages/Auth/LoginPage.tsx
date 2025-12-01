@@ -6,6 +6,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { createPageUrl } from "@/utils";
 import { useAuth } from "@/context/useAuth";
 import { useToast } from "@/hooks/useToast";
 import {
@@ -329,8 +331,15 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
       <form
         onSubmit={handleLogin}
-        className="w-full max-w-md bg-white p-6 md:p-8 rounded-lg shadow-lg"
+        className="w-full max-w-md bg-white p-6 md:p-8 rounded-lg shadow-lg relative"
       >
+        <Link
+          to={createPageUrl("LandingPage")}
+          className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Back</span>
+        </Link>
         <h1 className="text-2xl md:text-3xl font-bold text-center mb-1 text-gray-900">
           Login
         </h1>

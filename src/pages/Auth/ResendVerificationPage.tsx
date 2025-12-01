@@ -6,10 +6,10 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/useToast";
 import { getApiBase } from "@/utils/apiConfig";
 
@@ -110,7 +110,15 @@ export default function ResendVerificationPage() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        className="relative"
       >
+        <Link
+          to="/auth?mode=register"
+          className="absolute -top-12 left-0 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Back</span>
+        </Link>
         <Card className="max-w-md shadow-xl">
           <CardHeader>
             <CardTitle className="text-center text-lg font-semibold text-gray-800">

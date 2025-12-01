@@ -4,6 +4,9 @@
 // Shows friendly states: waiting, success, or failed.
 // --------------------------------------------------------------
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
 import { getApiBase } from '@/utils/apiConfig'
 
 export default function VerifyEmailPage() {
@@ -37,11 +40,18 @@ export default function VerifyEmailPage() {
     })()
   }, [token, incomingStatus])
 
-  // Friendly “waiting” message
+  // Friendly "waiting" message
   if (status === 'pending' || (!status && !token)) {
     return (
       <div className='min-h-screen flex items-center justify-center bg-gray-50'>
-        <div className='bg-white p-8 rounded-xl shadow-lg text-center max-w-md'>
+        <div className='bg-white p-8 rounded-xl shadow-lg text-center max-w-md relative'>
+          <Link
+            to="/auth?mode=login"
+            className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back</span>
+          </Link>
           <h1 className='text-2xl font-semibold mb-2 text-blue-600'>
             Verify your email
           </h1>
@@ -64,7 +74,14 @@ export default function VerifyEmailPage() {
   // Friendly success / failure messages
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50'>
-      <div className='bg-white p-8 rounded-xl shadow-lg text-center max-w-md'>
+      <div className='bg-white p-8 rounded-xl shadow-lg text-center max-w-md relative'>
+        <Link
+          to="/auth?mode=login"
+          className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Back</span>
+        </Link>
         {status === 'success' ? (
           <>
             <h1 className='text-2xl font-semibold mb-2 text-green-600'>

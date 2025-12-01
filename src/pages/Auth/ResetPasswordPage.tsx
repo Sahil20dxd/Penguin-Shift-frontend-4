@@ -4,8 +4,9 @@
 // Provides friendly messages for success, errors, and validation.
 // --------------------------------------------------------------
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { getApiBase } from "@/utils/apiConfig";
 
@@ -75,8 +76,15 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg"
+        className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg relative"
       >
+        <Link
+          to="/auth?mode=login"
+          className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Back</span>
+        </Link>
         <h1 className="text-2xl font-bold text-center mb-1 text-gray-900">
           Reset Password
         </h1>
