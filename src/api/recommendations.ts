@@ -1,6 +1,6 @@
 // src/api/recommendations.ts
 
-import { apiJson } from './apiClient';
+import { apiJson } from '@/components/shift/apiClient';
 import type { RecommendedTrack } from '@/types/recommendations';
 
 /**
