@@ -45,6 +45,7 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 }
 
 export default function ExplorePublicPlaylists() {
+  usePageTitle('Explore Public Playlists');
   const navigate = useNavigate();
   const [playlists, setPlaylists] = useState<PublicPlaylist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,12 +226,18 @@ export default function ExplorePublicPlaylists() {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2 }}
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6"
-    >
+    <>
+      <SEOHead
+        title="Explore Public Playlists - PenguinShift"
+        description="Discover and share music playlists from the PenguinShift community. Browse public playlists across different platforms."
+        url={typeof window !== "undefined" ? window.location.href : ""}
+      />
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6"
+      >
       <div className="max-w-7xl mx-auto">
         {toastMessage && (
           <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-4 md:px-6 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2 text-sm md:text-base max-w-[90vw]">
@@ -442,5 +449,6 @@ export default function ExplorePublicPlaylists() {
         />
       </div>
     </motion.div>
+    </>
   );
 }

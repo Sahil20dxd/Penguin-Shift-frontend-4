@@ -17,6 +17,7 @@ import {
   featureIconWrapper,
 } from "./landing.styles";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { SEOHead } from "@/components/SEOHead";
 
 /**
  * LandingPage.tsx
@@ -38,7 +39,13 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 export default function LandingPage() {
   usePageTitle('Home');
   return (
-    <div className="min-h-screen">
+    <>
+      <SEOHead
+        title="PenguinShift - Transfer Playlists Between Music Platforms"
+        description="Transfer your music playlists between Spotify and YouTube Music seamlessly. Never lose your favorite songs when switching music services."
+        url={typeof window !== "undefined" ? window.location.href : ""}
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 md:py-32">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-indigo-500/10" />
@@ -221,5 +228,6 @@ export default function LandingPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

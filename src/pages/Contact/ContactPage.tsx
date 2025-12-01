@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/useToast";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { SEOHead } from "@/components/SEOHead";
 import { Mail, Send, ChevronDown, HelpCircle, MessageSquare } from "lucide-react";
 import { apiJson } from "@/components/shift/apiClient";
 
@@ -123,7 +124,13 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
+    <>
+      <SEOHead
+        title="Contact Us - PenguinShift"
+        description="Get in touch with PenguinShift support. Have questions? We're here to help with your playlist transfer needs."
+        url={typeof window !== "undefined" ? window.location.href : ""}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
       <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
         {/* Header Section */}
         <motion.div
@@ -320,5 +327,6 @@ export default function ContactPage() {
       </div>
       {Toast}
     </div>
+    </>
   );
 }

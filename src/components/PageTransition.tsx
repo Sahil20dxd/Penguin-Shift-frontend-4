@@ -32,11 +32,20 @@ const pageTransition = {
 export default function PageTransition({ children }: PageTransitionProps) {
   const location = useLocation();
 
-  // Scroll to top on route change for better UX
+  // Scroll to top and focus management on route change for better UX
   useEffect(() => {
     // Use requestAnimationFrame for smoother scroll
     requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Focus management for accessibility
+      const mainContent = document.getElementById('main-content');
+      if (mainContent) {
+        // Use setTimeout to ensure DOM is ready
+        setTimeout(() => {
+          mainContent.focus();
+        }, 100);
+      }
     });
   }, [location.pathname]);
 

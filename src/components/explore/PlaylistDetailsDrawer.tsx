@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/useToast";
+import { useKeyboardShortcuts, ESC_KEY } from "@/hooks/useKeyboardShortcuts";
 import type { PublicPlaylist } from "@/types/publicPlaylist";
 import { getTransferHistoryTracksByTransferId } from "@/api/transferHistory";
 import { reportPlaylist } from "@/api/publicPlaylists";
@@ -110,6 +111,18 @@ export default function PlaylistDetailsDrawer({
   const [reportReason, setReportReason] = useState<string>("");
   const [reportDetails, setReportDetails] = useState<string>("");
   const [reporting, setReporting] = useState(false);
+
+  // Keyboard shortcut: ESC to close drawer
+  useKeyboardShortcuts([
+    {
+      key: ESC_KEY,
+      handler: () => {
+        if (open) {
+          onClose();
+        }
+      },
+    },
+  ]);
 
   // Fetch tracks when drawer opens and playlist has transferId
   useEffect(() => {

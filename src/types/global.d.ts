@@ -7,6 +7,10 @@ turnstile?: {
 render: (el: string | HTMLElement, opts: Record<string, any>) => string
 reset: (id?: string) => void
 }
+LogRocket?: {
+captureException: (error: Error, options?: { extra?: Record<string, any> }) => void;
+init: (appId: string, options?: any) => void;
+}
 }
 
 interface ImportMetaEnv {

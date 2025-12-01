@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/context/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
+import SkipToContent from "@/components/SkipToContent";
 import logo from "/src/assets/PenguinShift_Logo.png";
 
 // Optimized logo image component (not lazy since it's above the fold)
@@ -119,6 +120,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
+      <SkipToContent />
       {/* Desktop Header */}
       <header 
         className="hidden md:flex sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-purple-100 shadow-sm"
@@ -350,7 +352,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         {children}
       </main>
 

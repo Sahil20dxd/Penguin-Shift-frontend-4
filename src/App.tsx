@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminBlockedRoute from "./components/AdminBlockedRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useToast } from "@/hooks/useToast";
 import * as RadixToast from "@radix-ui/react-toast";
 import { ShiftProvider } from "@/components/shift/ShiftContext";
@@ -26,6 +27,7 @@ const SelectDestination = lazy(() => import("./pages/Shift/SelectDestination"));
 const TransferResults = lazy(() => import("./pages/Shift/TransferResults"));
 const PublicPlaylistDestination = lazy(() => import("./pages/PublicPlaylistDestination"));
 const PublicPlaylistSelectDestination = lazy(() => import("./pages/PublicPlaylistSelectDestination"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Enhanced loading fallback component with animation
 const PageLoader = () => (
@@ -64,9 +66,10 @@ export default function App() {
   const { Toast: ToastUI } = useToast();
 
   return (
-    <RadixToast.Provider swipeDirection="right" duration={3500}>
-      <ShiftProvider>
-        <Suspense fallback={<PageLoader />}>
+    <ErrorBoundary>
+      <RadixToast.Provider swipeDirection="right" duration={3500}>
+        <ShiftProvider>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route
               path="/"
@@ -204,14 +207,24 @@ export default function App() {
                 </AdminBlockedRoute>
               }
             />
+            {/* 404 Catch-all route */}
+            <Route
+              path="*"
+              element={
+                <Layout currentPageName="NotFound">
+                  <NotFound />
+                </Layout>
+              }
+            />
           </Routes>
         </Suspense>
       </ShiftProvider>
       {/* Render the element (NOT <ToastUI />) */}
       {ToastUI}
 
-      {/* Radix viewport (where toasts are placed) - Mobile optimized */}
-      <RadixToast.Viewport className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[100] w-auto sm:w-[360px] max-w-[calc(100vw-2rem)] sm:max-w-[90vw] outline-none" />
-    </RadixToast.Provider>
+        {/* Radix viewport (where toasts are placed) - Mobile optimized */}
+        <RadixToast.Viewport className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[100] w-auto sm:w-[360px] max-w-[calc(100vw-2rem)] sm:max-w-[90vw] outline-none" />
+      </RadixToast.Provider>
+    </ErrorBoundary>
   );
 }
