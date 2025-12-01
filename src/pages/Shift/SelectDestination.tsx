@@ -22,12 +22,13 @@ import {
 import {
   checkLinkStatus,
   getLinkUrl,
-  listPlaylists,
   startTransfer,
   getTransferStatus,
   downloadUnmatchedCsv,
   downloadUnmatchedPdf
 } from '@/components/shift/apiClient'
+import RecommendationSection from '@/components/recommendations/RecommendationSection'
+import { getTransferHistory } from '@/api/transferHistory'
 import { useShift } from '@/components/shift/ShiftContext'
 import {
   Loader2,
@@ -91,9 +92,9 @@ export default function SelectDestination() {
   const [transferPct, setTransferPct] = useState(0)
   const [transferStatus, setTransferStatus] = useState<string>('IDLE')
   const [unmatchedCount, setUnmatchedCount] = useState(0)
-  const [destPlaylists, setDestPlaylists] = useState<DestPlaylist[]>([])
   const [createdPlaylistId, setCreatedPlaylistId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [transferHistoryId, setTransferHistoryId] = useState<number | null>(null)
   const pollRef = useRef<number | null>(null)
   const transferStatusRef = useRef<HTMLDivElement>(null)
 
@@ -135,16 +136,10 @@ export default function SelectDestination() {
     try {
       const rs = (await checkLinkStatus(destinationPlatform)) as { linked: boolean }
       setIsDestLinked(Boolean(rs?.linked))
-      if (rs?.linked) {
-        const dest = (await listPlaylists(destinationPlatform)) as {
-          items?: DestPlaylist[]
-        }
-        setDestPlaylists(dest?.items || [])
-      }
     } catch (e: any) {
       console.error('Link check failed:', e)
       setError(
-        `We couldn’t verify your ${destinationPlatform} connection. Please try reconnecting.`
+        `We couldn't verify your ${destinationPlatform} connection. Please try reconnecting.`
       )
     } finally {
       setCheckingLink(false)
@@ -195,10 +190,6 @@ export default function SelectDestination() {
               popup.close()
             } catch {}
             setIsDestLinked(true)
-            const dest = (await listPlaylists(destinationPlatform)) as {
-              items?: DestPlaylist[]
-            }
-            setDestPlaylists(dest?.items || [])
           }
         } catch {}
       }, 1200)
@@ -300,10 +291,12 @@ export default function SelectDestination() {
 
           if (st.status === 'COMPLETED' || st.status === 'FAILED') {
             if (pollRef.current) window.clearInterval(pollRef.current)
-            const dest = (await listPlaylists(destinationPlatform)) as {
-              items?: DestPlaylist[]
+            // Fetch transfer history ID for recommendations when transfer completes
+            if (st.status === 'COMPLETED') {
+              setTimeout(() => {
+                fetchTransferHistoryId()
+              }, 1000)
             }
-            setDestPlaylists(dest?.items || [])
             // Scroll to show completion message
             setTimeout(() => {
               transferStatusRef.current?.scrollIntoView({ 
@@ -342,6 +335,48 @@ export default function SelectDestination() {
       await downloadUnmatchedPdf(transferId)
     } catch {
       setError('Could not download unmatched songs PDF.')
+    }
+  }
+
+  // Fetch transfer history ID for recommendations
+  const fetchTransferHistoryId = async (retryCount = 0) => {
+    if (!transferId) return
+    try {
+      console.log('[SelectDestination] Fetching transfer history for transferId:', transferId, `(attempt ${retryCount + 1})`)
+      const histories = await getTransferHistory()
+      console.log('[SelectDestination] Received transfer histories:', histories.length)
+      
+      // Find the most recent history entry for this transfer
+      let matchingHistory = histories.find(h => h.transferId === transferId)
+      
+      // If no exact match, try the most recent one (might be the current transfer)
+      if (!matchingHistory && histories.length > 0) {
+        console.log('[SelectDestination] No exact match found, using most recent history')
+        matchingHistory = histories[0] // Most recent is first (ordered by created_at DESC)
+      }
+      
+      if (matchingHistory) {
+        console.log('[SelectDestination] Found matching history:', matchingHistory.id)
+        setTransferHistoryId(matchingHistory.id)
+      } else {
+        // Retry up to 3 times with increasing delays if history not found yet
+        if (retryCount < 3) {
+          console.log('[SelectDestination] No matching history found, retrying in', (retryCount + 1) * 2000, 'ms')
+          setTimeout(() => {
+            fetchTransferHistoryId(retryCount + 1)
+          }, (retryCount + 1) * 2000)
+        } else {
+          console.warn('[SelectDestination] No matching transfer history found after', retryCount + 1, 'attempts')
+        }
+      }
+    } catch (err) {
+      console.error('[SelectDestination] Error fetching transfer history:', err)
+      // Retry on error up to 2 times
+      if (retryCount < 2) {
+        setTimeout(() => {
+          fetchTransferHistoryId(retryCount + 1)
+        }, (retryCount + 1) * 2000)
+      }
     }
   }
 
@@ -642,7 +677,7 @@ export default function SelectDestination() {
                   </AnimatePresence>
 
                   {/* Progress Bar */}
-                  {(transferStatus === 'PENDING' || transferStatus === 'IN_PROGRESS' || transferStatus === 'RUNNING' || transferStatus === 'COMPLETED') && (
+                  {(transferStatus === 'PENDING' || transferStatus === 'IN_PROGRESS' || transferStatus === 'RUNNING') && (
                     <div className='mb-4'>
                       <div className='flex items-center justify-between mb-2'>
                         <div className='text-sm font-medium text-gray-700'>
@@ -652,81 +687,51 @@ export default function SelectDestination() {
                           {transferPct}%
                         </div>
                       </div>
-                      <Progress 
-                        value={transferPct} 
-                        className='h-3 bg-gray-200'
-                      />
+                      <div className='w-full bg-gray-200 rounded-full h-3 mb-2'>
+                        <div
+                          className='bg-gradient-to-r from-purple-600 to-blue-500 h-3 rounded-full transition-all duration-300'
+                          style={{ width: `${Math.max(0, Math.min(100, transferPct))}%` }}
+                        />
+                      </div>
                       <div className='text-xs text-gray-500 mt-1'>
                         Transfer #{transferId}
                       </div>
                     </div>
                   )}
 
-                  {destPlaylists.length > 0 && (
-                    <div className='space-y-2'>
-                      <div className='text-sm font-semibold text-gray-700'>
-                        Your {destName} playlists
+                  {transferStatus === 'COMPLETED' && unmatchedCount > 0 && (
+                    <div className='mt-6 flex items-center gap-3'>
+                      <div className='text-sm text-gray-700'>
+                        Unmatched songs:{' '}
+                        <span className='font-semibold'>{unmatchedCount}</span>
                       </div>
-                      <div className='grid grid-cols-1 gap-2'>
-                        {destPlaylists.map((p) => (
-                          <div
-                            key={p.id}
-                            className={
-                              'flex items-center gap-3 p-3 border rounded-lg ' +
-                              (createdPlaylistId === p.id
-                                ? 'border-purple-500 bg-purple-50'
-                                : 'border-gray-200')
-                            }
-                          >
-                            <div className='w-10 h-10 rounded bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center overflow-hidden'>
-                              {p.coverImage ? (
-                                <img
-                                  src={p.coverImage}
-                                  className='w-full h-full object-cover'
-                                />
-                              ) : (
-                                <Music2 className='w-5 h-5 text-white' />
-                              )}
-                            </div>
-                            <div className='flex-1 min-w-0'>
-                              <div className='font-medium truncate'>
-                                {p.name}
-                              </div>
-                              <div className='text-xs text-gray-500'>
-                                {p.songCount} songs
-                              </div>
-                            </div>
-                            {createdPlaylistId === p.id && (
-                              <div className='text-xs font-semibold text-purple-700'>
-                                NEW
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                      <Button
+                        variant='outline'
+                        onClick={() => void handleDownloadCsv()}
+                        disabled={!transferId}
+                      >
+                        <Download className='w-4 h-4 mr-2' /> CSV
+                      </Button>
+                      <Button
+                        variant='outline'
+                        onClick={() => void handleDownloadPdf()}
+                        disabled={!transferId}
+                      >
+                        <Download className='w-4 h-4 mr-2' /> PDF
+                      </Button>
                     </div>
                   )}
 
-                  <div className='mt-6 flex items-center gap-3'>
-                    <div className='text-sm text-gray-700'>
-                      Unmatched songs:{' '}
-                      <span className='font-semibold'>{unmatchedCount}</span>
+                  {/* Recommendations Section - Show when transfer is completed */}
+                  {transferStatus === 'COMPLETED' && transferHistoryId && (
+                    <div className='mt-8 border-t pt-6'>
+                      <RecommendationSection
+                        transferHistoryId={transferHistoryId}
+                        destinationPlatform={destinationPlatform}
+                        destinationPlaylistId={createdPlaylistId || undefined}
+                      />
                     </div>
-                    <Button
-                      variant='outline'
-                      onClick={() => void handleDownloadCsv()}
-                      disabled={!transferId}
-                    >
-                      <Download className='w-4 h-4 mr-2' /> CSV
-                    </Button>
-                    <Button
-                      variant='outline'
-                      onClick={() => void handleDownloadPdf()}
-                      disabled={!transferId}
-                    >
-                      <Download className='w-4 h-4 mr-2' /> PDF
-                    </Button>
-                  </div>
+                  )}
                 </motion.div>
               )}
             </>
