@@ -356,8 +356,8 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
         {children}
       </main>
 
-      {/* Footer (only on LandingPage) */}
-      {currentPageName === "LandingPage" && (
+      {/* Footer (on LandingPage, PrivacyPolicy, and TermsOfService) */}
+      {(currentPageName === "LandingPage" || currentPageName === "PrivacyPolicy" || currentPageName === "TermsOfService") && (
         <footer className="bg-slate-900 text-white py-16">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-4">
