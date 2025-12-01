@@ -147,9 +147,13 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
             {/* Nav Links */}
             <nav className="flex items-center gap-2">
               {filteredNavItems.map((item, index) => {
-                const isActive = location.pathname === item.url || 
-                  (item.url === "/" && location.pathname === "/") ||
-                  (item.url !== "/" && location.pathname.startsWith(item.url));
+                // Determine if this URL should use prefix matching (for routes with sub-paths like /shift)
+                const usePrefixMatching = item.url.startsWith("/shift");
+                
+                // Check active state: exact match for most routes, prefix match for /shift
+                const isActive = usePrefixMatching
+                  ? location.pathname.startsWith(item.url)
+                  : location.pathname === item.url;
                 
                 return (
                   <motion.div
@@ -284,9 +288,13 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
               <nav className="flex flex-col gap-2 mt-6 md:mt-8">
                 {filteredNavItems.map((item, index) => {
-                  const isActive = location.pathname === item.url || 
-                    (item.url === "/" && location.pathname === "/") ||
-                    (item.url !== "/" && location.pathname.startsWith(item.url));
+                  // Determine if this URL should use prefix matching (for routes with sub-paths like /shift)
+                  const usePrefixMatching = item.url.startsWith("/shift");
+                  
+                  // Check active state: exact match for most routes, prefix match for /shift
+                  const isActive = usePrefixMatching
+                    ? location.pathname.startsWith(item.url)
+                    : location.pathname === item.url;
                   
                   return (
                     <motion.div
