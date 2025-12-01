@@ -150,18 +150,13 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                 // Determine if this URL should use prefix matching (for routes with sub-paths like /shift)
                 const usePrefixMatching = item.url.startsWith("/shift");
                 
-                // Check active state: exact match for most routes, prefix match for /shift
+                // Check active state: exact match for most routes, prefix match for /shift (match any /shift/* path)
                 const isActive = usePrefixMatching
-                  ? location.pathname.startsWith(item.url)
+                  ? location.pathname.startsWith("/shift")
                   : location.pathname === item.url;
                 
                 return (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
+                  <div key={item.title}>
                     <Link
                       to={item.url}
                       className={
@@ -178,15 +173,12 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         />
                       )}
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
+                      <div className="transition-transform hover:scale-110 hover:rotate-5 active:scale-95">
                         <item.icon className="w-4 h-4" />
-                      </motion.div>
+                      </div>
                       <span>{item.title}</span>
                     </Link>
-                  </motion.div>
+                  </div>
                 );
               })}
 
@@ -291,18 +283,13 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                   // Determine if this URL should use prefix matching (for routes with sub-paths like /shift)
                   const usePrefixMatching = item.url.startsWith("/shift");
                   
-                  // Check active state: exact match for most routes, prefix match for /shift
+                  // Check active state: exact match for most routes, prefix match for /shift (match any /shift/* path)
                   const isActive = usePrefixMatching
-                    ? location.pathname.startsWith(item.url)
+                    ? location.pathname.startsWith("/shift")
                     : location.pathname === item.url;
                   
                   return (
-                    <motion.div
-                      key={item.title}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
+                    <div key={item.title}>
                       <Link
                         to={item.url}
                         onClick={() => setIsMobileMenuOpen(false)}
@@ -320,15 +307,12 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
                           />
                         )}
-                        <motion.div
-                          whileHover={{ scale: 1.1, rotate: 5 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
+                        <div className="transition-transform hover:scale-110 hover:rotate-5 active:scale-90">
                           <item.icon className="w-5 h-5" />
-                        </motion.div>
+                        </div>
                         <span>{item.title}</span>
                       </Link>
-                    </motion.div>
+                    </div>
                   );
                 })}
 
