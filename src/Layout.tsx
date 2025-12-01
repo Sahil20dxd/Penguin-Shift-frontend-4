@@ -358,10 +358,27 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
       {/* Footer (only on LandingPage) */}
       {currentPageName === "LandingPage" && (
-        <footer className="bg-slate-900 text-white py-16 text-center">
-          <p className="text-gray-400">
-            © {new Date().getFullYear()} PenguinShift — All rights reserved.
-          </p>
+        <footer className="bg-slate-900 text-white py-16">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-4">
+              <Link
+                to="/privacy-policy"
+                className="text-gray-400 hover:text-white transition-colors text-sm md:text-base"
+              >
+                Privacy Policy
+              </Link>
+              <span className="text-gray-600 hidden md:inline">|</span>
+              <Link
+                to="/terms-of-service"
+                className="text-gray-400 hover:text-white transition-colors text-sm md:text-base"
+              >
+                Terms of Service
+              </Link>
+            </div>
+            <p className="text-gray-400 text-center text-sm md:text-base">
+              © {new Date().getFullYear()} PenguinShift — All rights reserved.
+            </p>
+          </div>
         </footer>
       )}
     </div>

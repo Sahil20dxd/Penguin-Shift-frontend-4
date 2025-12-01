@@ -27,6 +27,8 @@ const SelectDestination = lazy(() => import("./pages/Shift/SelectDestination"));
 const TransferResults = lazy(() => import("./pages/Shift/TransferResults"));
 const PublicPlaylistDestination = lazy(() => import("./pages/PublicPlaylistDestination"));
 const PublicPlaylistSelectDestination = lazy(() => import("./pages/PublicPlaylistSelectDestination"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Enhanced loading fallback component with animation
@@ -194,6 +196,22 @@ export default function App() {
               element={
                 <Layout currentPageName="Contact">
                   <ContactPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/privacy-policy"
+              element={
+                <Layout currentPageName="PrivacyPolicy">
+                  <PrivacyPolicy />
+                </Layout>
+              }
+            />
+            <Route
+              path="/terms-of-service"
+              element={
+                <Layout currentPageName="TermsOfService">
+                  <TermsOfService />
                 </Layout>
               }
             />

@@ -465,6 +465,28 @@ export default function RegisterPage() {
           Register with Google
         </Button>
 
+        {/* Privacy Policy and Terms links for Google OAuth */}
+        <div className='mt-2 text-xs md:text-sm text-center text-gray-500'>
+          By continuing, you agree to our{' '}
+          <Link
+            to='/terms-of-service'
+            className='text-blue-600 hover:underline'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            Terms of Service
+          </Link>
+          {' '}and{' '}
+          <Link
+            to='/privacy-policy'
+            className='text-blue-600 hover:underline'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            Privacy Policy
+          </Link>
+        </div>
+
         {/* Redirect link */}
         <div className='mt-4 text-sm text-center text-gray-600'>
           Already have an account?{' '}
