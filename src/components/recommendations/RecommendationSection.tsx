@@ -30,23 +30,18 @@ export default function RecommendationSection({
   const { showToast } = useToast();
 
   useEffect(() => {
-    if (transferHistoryId) {
-      fetchRecommendations();
-    }
+    fetchRecommendations();
   }, [transferHistoryId]);
 
   const fetchRecommendations = async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[RecommendationSection] Fetching recommendations for transferHistoryId:', transferHistoryId);
       const data = await getRecommendations(transferHistoryId, 10);
-      console.log('[RecommendationSection] Received recommendations:', data);
       setRecommendations(data);
     } catch (err: any) {
       console.error('[RecommendationSection] Error fetching recommendations:', err);
-      const errorMessage = err?.message || 'Failed to load recommendations. Please try again later.';
-      setError(errorMessage);
+      setError('Failed to load recommendations. Please try again later.');
     } finally {
       setLoading(false);
     }

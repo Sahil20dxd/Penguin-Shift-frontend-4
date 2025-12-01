@@ -125,10 +125,7 @@ export default function TransferResults() {
           }
           
           // Fetch transfer history to get history ID for recommendations
-          // Add a small delay to ensure transfer history is saved in the database
-          setTimeout(() => {
-            fetchTransferHistoryId();
-          }, 1000);
+          fetchTransferHistoryId();
           
           return; // Exit immediately
         } else if (status === "IN_PROGRESS" || status === "RUNNING" || status === "PENDING") {
@@ -251,52 +248,21 @@ export default function TransferResults() {
     navigate(createPageUrl("SelectPlaylist"));
   };
 
-  const fetchTransferHistoryId = async (retryCount = 0) => {
+  const fetchTransferHistoryId = async () => {
     try {
-      console.log('[TransferResults] Fetching transfer history for transferId:', transferIdNum, `(attempt ${retryCount + 1})`);
       const histories = await getTransferHistory();
-      console.log('[TransferResults] Received transfer histories:', histories);
-      
       // Find the most recent history entry for this transfer
-      // Try matching by transferId first, then by most recent if no match
-      let matchingHistory = histories.find(h => h.transferId === transferIdNum);
-      
-      // If no match, try the most recent one (might be the current transfer)
-      if (!matchingHistory && histories.length > 0) {
-        console.log('[TransferResults] No exact match found, using most recent history');
-        matchingHistory = histories[0]; // Most recent is first (ordered by created_at DESC)
-      }
-      
+      const matchingHistory = histories.find(h => h.transferId === transferIdNum);
       if (matchingHistory) {
-        console.log('[TransferResults] Found matching history:', matchingHistory);
         setTransferHistoryId(matchingHistory.id);
         // Determine destination platform from history
         const platform = matchingHistory.destinationPlatform?.toLowerCase();
-        console.log('[TransferResults] Destination platform:', platform);
         if (platform === 'spotify' || platform === 'youtube') {
           setDestinationPlatform(platform);
-        } else {
-          console.warn('[TransferResults] Unknown destination platform:', platform);
-        }
-      } else {
-        // Retry up to 3 times with increasing delays if history not found yet
-        if (retryCount < 3) {
-          console.log('[TransferResults] No matching history found, retrying in', (retryCount + 1) * 2000, 'ms');
-          setTimeout(() => {
-            fetchTransferHistoryId(retryCount + 1);
-          }, (retryCount + 1) * 2000);
-        } else {
-          console.warn('[TransferResults] No matching transfer history found after', retryCount + 1, 'attempts');
         }
       }
     } catch (err) {
       console.error('[TransferResults] Error fetching transfer history:', err);
-      // Retry on error up to 2 times
-      if (retryCount < 2) {
-        setTimeout(() => {
-          fetchTransferHistoryId(retryCount + 1);
-        }, (retryCount + 1) * 2000);
-      }
       // Don't show error to user - recommendations are optional
     }
   };
@@ -534,102 +500,25 @@ export default function TransferResults() {
           )}
 
           {isCompleted && (
-            <>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl">🎵</div>
-                  <ArrowRight className="w-6 h-6 text-gray-400" />
-                  <div className="text-4xl">🎬</div>
-                </div>
-                <CheckCircle className="w-12 h-12 text-green-500" />
-              </div>
-
-              {(getMatched() > 0 || getUnmatched() > 0) && (
-                <>
-                  <div className="text-center mb-6">
-                    <p className="text-xl font-semibold mb-2">
-                      Transfer Complete
-                    </p>
-                    <p className="text-gray-600">
-                      {getMatched() + getUnmatched()} Songs
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">
-                        {getMatched()}
-                      </p>
-                      <p className="text-sm text-gray-600">Matched</p>
-                    </div>
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                      <p className="text-2xl font-bold text-yellow-600">
-                        {getUnmatched()}
-                      </p>
-                      <p className="text-sm text-gray-600">Unmatched</p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">
-                        {getMatched() + getUnmatched()}
-                      </p>
-                      <p className="text-sm text-gray-600">Total</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 flex-wrap">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleDownload("csv")}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Download CSV
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleDownload("pdf")}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download PDF
-                    </Button>
-                    {getUnmatched() > 0 && (
-                      <Button
-                        variant="outline"
-                        onClick={handleDownloadUnmatched}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Unmatched Songs
-                      </Button>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
+            <div className="text-center py-8">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                TRANSFER COMPLETED
+              </h2>
+              <p className="text-gray-600">
+                Your playlist has been successfully transferred.
+              </p>
+            </div>
           )}
         </motion.div>
 
         {/* Recommendations Section - Only show when transfer is completed and we have history ID */}
         {isCompleted && transferHistoryId && destinationPlatform && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <RecommendationSection
-              transferHistoryId={transferHistoryId}
-              destinationPlatform={destinationPlatform}
-              destinationPlaylistId={transfer?.createdPlaylistId || transfer?.destinationPlaylistId}
-            />
-          </motion.div>
-        )}
-        
-        {/* Debug info - remove in production */}
-        {isCompleted && import.meta.env.DEV && (
-          <div className="mt-4 p-4 bg-gray-100 rounded text-xs">
-            <p>Debug: isCompleted={String(isCompleted)}</p>
-            <p>transferHistoryId={String(transferHistoryId)}</p>
-            <p>destinationPlatform={String(destinationPlatform)}</p>
-            <p>transferId={String(transferIdNum)}</p>
-          </div>
+          <RecommendationSection
+            transferHistoryId={transferHistoryId}
+            destinationPlatform={destinationPlatform}
+            destinationPlaylistId={transfer?.createdPlaylistId || transfer?.destinationPlaylistId}
+          />
         )}
 
         <div className="flex justify-center gap-3 mt-8">
