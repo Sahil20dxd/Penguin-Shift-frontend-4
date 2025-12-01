@@ -309,7 +309,7 @@ export default function SelectDestination() {
               console.log('[SelectDestination] Transfer completed, will fetch history ID in 1 second. TransferId:', res.id)
               setTimeout(() => {
                 console.log('[SelectDestination] Calling fetchTransferHistoryId for transferId:', res.id)
-                fetchTransferHistoryId()
+                fetchTransferHistoryId(res.id)
               }, 1000)
             }
             // Scroll to show completion message
@@ -354,20 +354,26 @@ export default function SelectDestination() {
   }
 
   // Fetch transfer history ID for recommendations
-  const fetchTransferHistoryId = async (retryCount = 0) => {
-    if (!transferId) {
-      console.warn('[SelectDestination] fetchTransferHistoryId called but transferId is null')
+  const fetchTransferHistoryId = async (idToFetch: number | null = null, retryCount = 0) => {
+    // Use provided ID or fall back to state transferId
+    const targetTransferId = idToFetch ?? transferId
+    
+    if (!targetTransferId) {
+      console.warn('[SelectDestination] fetchTransferHistoryId called but transferId is null. idToFetch:', idToFetch, 'state transferId:', transferId)
       return
     }
+    
     try {
       console.log('[SelectDestination] ===== FETCHING TRANSFER HISTORY =====')
-      console.log('[SelectDestination] TransferId:', transferId, `| Attempt: ${retryCount + 1}`)
+      console.log('[SelectDestination] Target TransferId:', targetTransferId, `| Attempt: ${retryCount + 1}`)
+      console.log('[SelectDestination] State transferId:', transferId, '| Provided idToFetch:', idToFetch)
+      
       const histories = await getTransferHistory()
       console.log('[SelectDestination] Received transfer histories count:', histories.length)
       console.log('[SelectDestination] All histories:', histories.map(h => ({ id: h.id, transferId: h.transferId, destinationPlatform: h.destinationPlatform })))
       
       // Find the most recent history entry for this transfer
-      let matchingHistory = histories.find(h => h.transferId === transferId)
+      let matchingHistory = histories.find(h => h.transferId === targetTransferId)
       console.log('[SelectDestination] Exact match found:', matchingHistory ? `Yes (ID: ${matchingHistory.id})` : 'No')
       
       // If no exact match, try the most recent one (might be the current transfer)
@@ -386,7 +392,7 @@ export default function SelectDestination() {
         if (retryCount < 3) {
           console.log('[SelectDestination] ⚠️ No matching history found, retrying in', (retryCount + 1) * 2000, 'ms')
           setTimeout(() => {
-            fetchTransferHistoryId(retryCount + 1)
+            fetchTransferHistoryId(targetTransferId, retryCount + 1)
           }, (retryCount + 1) * 2000)
         } else {
           console.error('[SelectDestination] ❌ No matching transfer history found after', retryCount + 1, 'attempts')
@@ -402,7 +408,7 @@ export default function SelectDestination() {
       if (retryCount < 2) {
         console.log('[SelectDestination] Retrying after error in', (retryCount + 1) * 2000, 'ms')
         setTimeout(() => {
-          fetchTransferHistoryId(retryCount + 1)
+          fetchTransferHistoryId(targetTransferId, retryCount + 1)
         }, (retryCount + 1) * 2000)
       } else {
         console.error('[SelectDestination] ❌ Failed to fetch transfer history after', retryCount + 1, 'attempts')
