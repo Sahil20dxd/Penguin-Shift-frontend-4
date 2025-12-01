@@ -120,10 +120,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
       {/* Desktop Header */}
-      <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+      <header 
         className="hidden md:flex sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-purple-100 shadow-sm"
       >
         <div className="max-w-7xl mx-auto w-full px-6 py-4">
@@ -233,13 +230,10 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
             </nav>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       {/* Mobile Header */}
-      <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+      <header 
         className="md:hidden sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-purple-100 shadow-sm"
       >
         <div className="px-4 py-4 flex items-center justify-between">
@@ -353,7 +347,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
             </SheetContent>
           </Sheet>
         </div>
-      </motion.header>
+      </header>
 
       {/* Main Content */}
       <main className="flex-1">
