@@ -368,8 +368,8 @@ export default function SelectPlaylist() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6"
+      transition={{ duration: 0.2 }}
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6"
     >
       <div className="max-w-4xl mx-auto">
         <motion.div 
@@ -392,13 +392,53 @@ export default function SelectPlaylist() {
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
               role="alert"
-              className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700 text-sm shadow-sm"
+              className="mb-6 rounded-lg border-l-4 border-red-500 bg-gradient-to-r from-red-50 to-orange-50 px-4 md:px-6 py-4 shadow-sm"
             >
-              {error.includes("HTTP") || error.includes("401")
-                ? "Something went wrong. Please reconnect your account and try again."
-                : error}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-red-600 text-xs font-bold">!</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-red-800 font-semibold mb-1 text-sm md:text-base">
+                    {error.includes("HTTP") || error.includes("401")
+                      ? "Connection Issue"
+                      : "Error"}
+                  </p>
+                  <p className="text-red-700 text-sm mb-3">
+                    {error.includes("HTTP") || error.includes("401")
+                      ? "Something went wrong. Please reconnect your account and try again."
+                      : error}
+                  </p>
+                  <div className="flex gap-2">
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        onClick={() => void handleReconnect()}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        Reconnect
+                      </Button>
+                    </motion.div>
+                    {isLinked && (
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          onClick={() => void handleManualRefresh()}
+                          size="sm"
+                          variant="outline"
+                          className="border-red-300 text-red-700 hover:bg-red-100"
+                        >
+                          Retry
+                        </Button>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -536,10 +576,23 @@ export default function SelectPlaylist() {
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-8 text-gray-500"
+                  className="space-y-3"
                 >
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-purple-600" />
-                  <p className="text-sm md:text-base">Loading playlists...</p>
+                  {Array(3).fill(0).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1, duration: 0.2 }}
+                      className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
+                      </div>
+                    </motion.div>
+                  ))}
                 </motion.div>
               ) : filtered.length === 0 ? (
                 <motion.div 

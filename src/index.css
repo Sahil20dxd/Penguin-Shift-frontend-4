@@ -3,14 +3,15 @@
 @import "tailwindcss/theme";
 @import "tailwindcss/utilities";
 
-/* Mobile-optimized smooth scrolling */
+/* Performance optimizations */
 @layer base {
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
+    /* Allow text selection for better UX */
+    -webkit-user-select: text;
+    user-select: text;
   }
   
   body {
@@ -18,6 +19,8 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     overscroll-behavior-y: contain;
+    /* Improve rendering performance */
+    will-change: scroll-position;
   }
   
   /* Better touch targets for mobile */
@@ -26,15 +29,22 @@
     touch-action: manipulation;
   }
   
-  /* Smooth transitions for all interactive elements */
+  /* Optimized transitions - only animate transform and opacity for performance */
   * {
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+    transition-duration: 200ms;
   }
   
-  /* Prevent text selection on mobile for better UX */
-  button, .no-select {
+  /* Use GPU acceleration for transforms */
+  [class*="motion-"], [class*="animate-"] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  /* Prevent text selection on buttons and interactive elements */
+  button, .no-select, [role="button"] {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -42,10 +52,42 @@
   }
   
   /* Allow text selection in inputs and textareas */
-  input, textarea {
+  input, textarea, p, span, div[contenteditable] {
     -webkit-user-select: text;
     -moz-user-select: text;
     -ms-user-select: text;
     user-select: text;
+  }
+  
+  /* Smooth focus styles */
+  *:focus-visible {
+    outline: 2px solid rgb(147, 51, 234);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  /* Improve image loading */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  /* Better scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgb(203, 213, 225);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(148, 163, 184);
   }
 }

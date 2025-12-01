@@ -243,31 +243,57 @@ export default function TransferResults() {
   // -------------------------------
   if (error && !transfer) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-6 flex items-center justify-center"
+      >
+        <div className="max-w-4xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center border border-gray-200"
+          >
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+            >
+              <XCircle className="w-20 h-20 text-red-500 mx-auto mb-6" />
+            </motion.div>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
               Transfer Error
             </h2>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <Button onClick={handleNewShift} variant="outline">
-              Start New Transfer
-            </Button>
-          </div>
+            <p className="text-gray-600 mb-8 text-lg">{error}</p>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button onClick={handleNewShift} variant="outline" size="lg">
+                Start New Transfer
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (!transfer) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-6 flex items-center justify-center"
+      >
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-purple-600" />
-          <p className="text-gray-600">Loading transfer details...</p>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <Loader2 className="w-12 h-12 mx-auto mb-4 text-purple-600" />
+          </motion.div>
+          <p className="text-gray-600 text-lg">Loading transfer details...</p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -287,40 +313,70 @@ export default function TransferResults() {
 
   const banner =
     transfer.status === "FAILED" ? (
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         role="alert"
-        className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
+        className="mb-6 p-4 md:p-6 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg shadow-sm"
       >
-        Your playlist shift failed. Please reconnect your account and
-        try again.
-        <div className="mt-3">
-          <Button
-            variant="outline"
-            onClick={() => navigate(createPageUrl("Reconnect"))}
-          >
-            Reconnect Account
-          </Button>
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+              <span className="text-red-600 text-sm font-bold">!</span>
+            </div>
+          </div>
+          <div className="flex-1">
+            <p className="text-red-800 font-semibold mb-2">
+              Your playlist shift failed. Please reconnect your account and try again.
+            </p>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                variant="outline"
+                onClick={() => navigate(createPageUrl("Reconnect"))}
+                size="sm"
+                className="border-red-300 text-red-700 hover:bg-red-100"
+              >
+                Reconnect Account
+              </Button>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     ) : transfer.status === "COMPLETED" ? (
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         role="status"
-        className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm"
+        className="mb-6 p-4 md:p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg shadow-sm"
       >
-        ✅ Your playlist transfer finished successfully.
-        {(getMatched() > 0 || getUnmatched() > 0) && (
-          <span className="ml-2">
-            Matched {getMatched()} / {getMatched() + getUnmatched()} songs.
-          </span>
-        )}
-      </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+              <span className="text-green-600 text-sm font-bold">✓</span>
+            </div>
+          </div>
+          <p className="text-green-800 font-semibold">
+            ✅ Your playlist transfer finished successfully.
+            {(getMatched() > 0 || getUnmatched() > 0) && (
+              <span className="ml-2 font-normal">
+                Matched {getMatched()} / {getMatched() + getUnmatched()} songs.
+              </span>
+            )}
+          </p>
+        </div>
+      </motion.div>
     ) : null;
 
   // -------------------------------
   // Main render
   // -------------------------------
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-6"
+    >
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -338,25 +394,45 @@ export default function TransferResults() {
         </div>
 
         {error && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
             role="alert"
-            className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
+            className="mb-6 p-4 md:p-6 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg shadow-sm"
           >
-            {error}
-          </div>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-red-600 text-sm font-bold">!</span>
+                </div>
+              </div>
+              <p className="text-red-800 font-semibold flex-1">{error}</p>
+            </div>
+          </motion.div>
         )}
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6 border border-gray-200"
+        >
           {banner}
           {transfer.status === "FAILED" && (
-            <div
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
               role="alert"
-              className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"
+              className="mb-6 p-4 md:p-6 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg"
             >
-              Your playlist transfer failed. Please try again or reconnect your account and try again.
-              <div className="mt-3">
-                <Button
-                  variant="outline"
+              <p className="text-red-800 font-semibold mb-2">Transfer Failed</p>
+              <p className="text-red-700 text-sm mb-4">
+                Your playlist transfer failed. Please try again or reconnect your account.
+              </p>
+              <div className="flex gap-2">
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="outline"
                   onClick={() => navigate(createPageUrl("SelectPlaylist"))}
                 >
                   Start New Transfer
@@ -481,6 +557,6 @@ export default function TransferResults() {
           </Link>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

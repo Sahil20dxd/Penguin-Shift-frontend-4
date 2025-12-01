@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonPlaylistCard } from "@/components/ui/skeleton-loader";
 import { AnimatePresence, motion } from "framer-motion";
 import { SearchX } from "lucide-react";
 import { getExplorePublicPlaylists, type PaginatedPlaylistsResponse } from "@/api/publicPlaylists";
@@ -227,8 +228,8 @@ export default function ExplorePublicPlaylists() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6"
+      transition={{ duration: 0.2 }}
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6"
     >
       <div className="max-w-7xl mx-auto">
         {toastMessage && (
@@ -265,10 +266,38 @@ export default function ExplorePublicPlaylists() {
         />
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 font-medium">Error loading playlists</p>
-            <p className="text-red-600 text-sm mt-1">{error}</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6 p-4 md:p-6 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-red-600 text-sm font-bold">!</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-red-800 font-semibold mb-1">Error loading playlists</p>
+                <p className="text-red-600 text-sm">{error}</p>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="mt-3"
+                >
+                  <Button
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    Retry
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         <div className="mb-4 text-sm text-gray-600">
@@ -289,7 +318,7 @@ export default function ExplorePublicPlaylists() {
             variants={{
               visible: {
                 transition: {
-                  staggerChildren: 0.1
+                  staggerChildren: 0.05
                 }
               }
             }}
@@ -301,14 +330,12 @@ export default function ExplorePublicPlaylists() {
                 <motion.div
                   key={i}
                   variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 }
+                    hidden: { opacity: 0, scale: 0.9 },
+                    visible: { opacity: 1, scale: 1 }
                   }}
-                  className="space-y-3"
+                  transition={{ duration: 0.2 }}
                 >
-                  <Skeleton className="aspect-square rounded-xl animate-pulse bg-gradient-to-br from-gray-200 to-gray-300" />
-                  <Skeleton className="h-5 w-3/4 animate-pulse bg-gradient-to-r from-gray-200 to-gray-300" />
-                  <Skeleton className="h-4 w-1/2 animate-pulse bg-gradient-to-r from-gray-200 to-gray-300" />
+                  <SkeletonPlaylistCard />
                 </motion.div>
               ))}
           </motion.div>
@@ -363,7 +390,7 @@ export default function ExplorePublicPlaylists() {
               variants={{
                 visible: {
                   transition: {
-                    staggerChildren: 0.1
+                    staggerChildren: 0.03
                   }
                 }
               }}
@@ -373,16 +400,16 @@ export default function ExplorePublicPlaylists() {
                 {paginatedPlaylists.map((playlist, index) => (
                   <motion.div
                     key={playlist.id}
-                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
                     transition={{ 
-                      delay: index * 0.05,
-                      duration: 0.3,
+                      duration: 0.25,
                       type: "spring",
-                      stiffness: 300,
-                      damping: 25
+                      stiffness: 400,
+                      damping: 30
                     }}
+                    layout
                   >
                     <PlaylistCard
                       playlist={playlist}

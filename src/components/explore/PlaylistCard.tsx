@@ -62,17 +62,18 @@ export default function PlaylistCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      whileHover={{ y: -8, scale: 1.02 }}
-      whileTap={{ scale: 0.96, y: -2 }}
+      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
       transition={{ 
         duration: 0.2,
         type: "spring",
         stiffness: 400,
-        damping: 20
+        damping: 25
       }}
+      style={{ willChange: 'transform' }}
     >
       <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-200 cursor-pointer group">
         {/* Cover image */}
