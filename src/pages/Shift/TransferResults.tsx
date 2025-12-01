@@ -434,12 +434,13 @@ export default function TransferResults() {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     variant="outline"
-                  onClick={() => navigate(createPageUrl("SelectPlaylist"))}
-                >
-                  Start New Transfer
-                </Button>
+                    onClick={() => navigate(createPageUrl("SelectPlaylist"))}
+                  >
+                    Start New Transfer
+                  </Button>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {isInProgress && (
@@ -541,7 +542,7 @@ export default function TransferResults() {
               )}
             </>
           )}
-        </div>
+        </motion.div>
 
         <div className="flex justify-center gap-3">
           <Button
