@@ -37,11 +37,14 @@ export default function RecommendationSection({
     setLoading(true);
     setError(null);
     try {
+      console.log('[RecommendationSection] Fetching recommendations for transferHistoryId:', transferHistoryId);
       const data = await getRecommendations(transferHistoryId, 10);
+      console.log('[RecommendationSection] Received recommendations:', data);
       setRecommendations(data);
     } catch (err: any) {
       console.error('[RecommendationSection] Error fetching recommendations:', err);
-      setError('Failed to load recommendations. Please try again later.');
+      const errorMessage = err?.message || 'Failed to load recommendations. Please try again later.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

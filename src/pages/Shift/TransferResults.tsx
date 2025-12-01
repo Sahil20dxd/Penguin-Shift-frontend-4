@@ -250,16 +250,33 @@ export default function TransferResults() {
 
   const fetchTransferHistoryId = async () => {
     try {
+      console.log('[TransferResults] Fetching transfer history for transferId:', transferIdNum);
       const histories = await getTransferHistory();
+      console.log('[TransferResults] Received transfer histories:', histories);
+      
       // Find the most recent history entry for this transfer
-      const matchingHistory = histories.find(h => h.transferId === transferIdNum);
+      // Try matching by transferId first, then by most recent if no match
+      let matchingHistory = histories.find(h => h.transferId === transferIdNum);
+      
+      // If no match, try the most recent one (might be the current transfer)
+      if (!matchingHistory && histories.length > 0) {
+        console.log('[TransferResults] No exact match found, using most recent history');
+        matchingHistory = histories[0]; // Most recent is first (ordered by created_at DESC)
+      }
+      
       if (matchingHistory) {
+        console.log('[TransferResults] Found matching history:', matchingHistory);
         setTransferHistoryId(matchingHistory.id);
         // Determine destination platform from history
         const platform = matchingHistory.destinationPlatform?.toLowerCase();
+        console.log('[TransferResults] Destination platform:', platform);
         if (platform === 'spotify' || platform === 'youtube') {
           setDestinationPlatform(platform);
+        } else {
+          console.warn('[TransferResults] Unknown destination platform:', platform);
         }
+      } else {
+        console.warn('[TransferResults] No matching transfer history found');
       }
     } catch (err) {
       console.error('[TransferResults] Error fetching transfer history:', err);
@@ -575,11 +592,27 @@ export default function TransferResults() {
 
         {/* Recommendations Section - Only show when transfer is completed and we have history ID */}
         {isCompleted && transferHistoryId && destinationPlatform && (
-          <RecommendationSection
-            transferHistoryId={transferHistoryId}
-            destinationPlatform={destinationPlatform}
-            destinationPlaylistId={transfer?.createdPlaylistId || transfer?.destinationPlaylistId}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <RecommendationSection
+              transferHistoryId={transferHistoryId}
+              destinationPlatform={destinationPlatform}
+              destinationPlaylistId={transfer?.createdPlaylistId || transfer?.destinationPlaylistId}
+            />
+          </motion.div>
+        )}
+        
+        {/* Debug info - remove in production */}
+        {isCompleted && import.meta.env.DEV && (
+          <div className="mt-4 p-4 bg-gray-100 rounded text-xs">
+            <p>Debug: isCompleted={String(isCompleted)}</p>
+            <p>transferHistoryId={String(transferHistoryId)}</p>
+            <p>destinationPlatform={String(destinationPlatform)}</p>
+            <p>transferId={String(transferIdNum)}</p>
+          </div>
         )}
 
         <div className="flex justify-center gap-3 mt-8">
