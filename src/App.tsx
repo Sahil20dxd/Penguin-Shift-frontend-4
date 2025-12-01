@@ -187,6 +187,14 @@ export default function App() {
               }
             />
             <Route
+              path="/contact"
+              element={
+                <Layout currentPageName="Contact">
+                  <ContactPage />
+                </Layout>
+              }
+            />
+            <Route
               path="/shift/results"
               element={
                 <AdminBlockedRoute>
