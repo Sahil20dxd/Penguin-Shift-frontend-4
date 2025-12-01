@@ -365,7 +365,7 @@ export default function SelectDestination() {
         }, 3000)
       } else {
         setError(
-          'We couldn't start the transfer. Please check your connection and try again.'
+          'We couldn\'t start the transfer. Please check your connection and try again.'
         )
       }
     } finally {
