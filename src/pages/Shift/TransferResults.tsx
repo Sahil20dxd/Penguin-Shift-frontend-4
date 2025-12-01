@@ -125,7 +125,10 @@ export default function TransferResults() {
           }
           
           // Fetch transfer history to get history ID for recommendations
-          fetchTransferHistoryId();
+          // Add a small delay to ensure transfer history is saved in the database
+          setTimeout(() => {
+            fetchTransferHistoryId();
+          }, 1000);
           
           return; // Exit immediately
         } else if (status === "IN_PROGRESS" || status === "RUNNING" || status === "PENDING") {
@@ -248,9 +251,9 @@ export default function TransferResults() {
     navigate(createPageUrl("SelectPlaylist"));
   };
 
-  const fetchTransferHistoryId = async () => {
+  const fetchTransferHistoryId = async (retryCount = 0) => {
     try {
-      console.log('[TransferResults] Fetching transfer history for transferId:', transferIdNum);
+      console.log('[TransferResults] Fetching transfer history for transferId:', transferIdNum, `(attempt ${retryCount + 1})`);
       const histories = await getTransferHistory();
       console.log('[TransferResults] Received transfer histories:', histories);
       
@@ -276,10 +279,24 @@ export default function TransferResults() {
           console.warn('[TransferResults] Unknown destination platform:', platform);
         }
       } else {
-        console.warn('[TransferResults] No matching transfer history found');
+        // Retry up to 3 times with increasing delays if history not found yet
+        if (retryCount < 3) {
+          console.log('[TransferResults] No matching history found, retrying in', (retryCount + 1) * 2000, 'ms');
+          setTimeout(() => {
+            fetchTransferHistoryId(retryCount + 1);
+          }, (retryCount + 1) * 2000);
+        } else {
+          console.warn('[TransferResults] No matching transfer history found after', retryCount + 1, 'attempts');
+        }
       }
     } catch (err) {
       console.error('[TransferResults] Error fetching transfer history:', err);
+      // Retry on error up to 2 times
+      if (retryCount < 2) {
+        setTimeout(() => {
+          fetchTransferHistoryId(retryCount + 1);
+        }, (retryCount + 1) * 2000);
+      }
       // Don't show error to user - recommendations are optional
     }
   };

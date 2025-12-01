@@ -30,7 +30,9 @@ export default function RecommendationSection({
   const { showToast } = useToast();
 
   useEffect(() => {
-    fetchRecommendations();
+    if (transferHistoryId) {
+      fetchRecommendations();
+    }
   }, [transferHistoryId]);
 
   const fetchRecommendations = async () => {
