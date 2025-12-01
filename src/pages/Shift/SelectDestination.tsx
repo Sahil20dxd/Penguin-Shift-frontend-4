@@ -98,6 +98,18 @@ export default function SelectDestination() {
   const pollRef = useRef<number | null>(null)
   const transferStatusRef = useRef<HTMLDivElement>(null)
 
+  // Debug: Log state changes for recommendation section
+  useEffect(() => {
+    console.log('[SelectDestination] State changed:', {
+      transferStatus,
+      transferHistoryId,
+      destinationPlatform,
+      createdPlaylistId,
+      transferId,
+      shouldShowRecommendations: transferStatus === 'COMPLETED' && transferHistoryId !== null
+    })
+  }, [transferStatus, transferHistoryId, destinationPlatform, createdPlaylistId, transferId])
+
   // ✅ On mount, check destination link
   useEffect(() => {
     void ensureDestinationLinked()
