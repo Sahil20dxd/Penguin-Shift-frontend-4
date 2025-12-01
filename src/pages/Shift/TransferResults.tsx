@@ -22,6 +22,9 @@ import {
   downloadFile,
   downloadUnmatched,
 } from "@/components/shift/apiClient";
+import RecommendationSection from "@/components/recommendations/RecommendationSection";
+import { getTransferHistory } from "@/api/transferHistory";
+import { apiJson } from "@/components/shift/apiClient";
 
 // Result type - matches backend response
 type TransferResult = {
@@ -57,6 +60,8 @@ export default function TransferResults() {
 
   const [transfer, setTransfer] = useState<TransferResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [transferHistoryId, setTransferHistoryId] = useState<number | null>(null);
+  const [destinationPlatform, setDestinationPlatform] = useState<'spotify' | 'youtube' | null>(null);
   const pollHandle = useRef<number | null>(null);
   const shouldStopPollingRef = useRef<boolean>(false);
 
@@ -118,6 +123,10 @@ export default function TransferResults() {
             clearInterval(pollHandle.current);
             pollHandle.current = null;
           }
+          
+          // Fetch transfer history to get history ID for recommendations
+          fetchTransferHistoryId();
+          
           return; // Exit immediately
         } else if (status === "IN_PROGRESS" || status === "RUNNING" || status === "PENDING") {
           console.log('[TransferResults] Transfer in progress:', {
@@ -237,6 +246,44 @@ export default function TransferResults() {
   const handleNewShift = () => {
     resetState();
     navigate(createPageUrl("SelectPlaylist"));
+  };
+
+  const fetchTransferHistoryId = async () => {
+    try {
+      const histories = await getTransferHistory();
+      // Find the most recent history entry for this transfer
+      const matchingHistory = histories.find(h => h.transferId === transferIdNum);
+      if (matchingHistory) {
+        setTransferHistoryId(matchingHistory.id);
+        // Determine destination platform from history
+        const platform = matchingHistory.destinationPlatform?.toLowerCase();
+        if (platform === 'spotify' || platform === 'youtube') {
+          setDestinationPlatform(platform);
+        }
+      }
+    } catch (err) {
+      console.error('[TransferResults] Error fetching transfer history:', err);
+      // Don't show error to user - recommendations are optional
+    }
+  };
+
+  const handleAddTracksToPlaylist = async (trackIds: string[]) => {
+    if (!transfer?.createdPlaylistId || !destinationPlatform) {
+      throw new Error('Playlist ID or platform not available');
+    }
+
+    const platform = destinationPlatform;
+    const playlistId = transfer.createdPlaylistId;
+
+    // Add tracks to playlist using platform-specific API
+    const payload = platform === 'spotify' 
+      ? { playlistId, trackIds }
+      : { playlistId, videoIds: trackIds }; // YouTube uses videoIds
+
+    await apiJson(`/api/playlists/destination/${platform}/add-tracks`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
   };
 
   // -------------------------------
@@ -544,7 +591,17 @@ export default function TransferResults() {
           )}
         </motion.div>
 
-        <div className="flex justify-center gap-3">
+        {/* Recommendations Section - Only show when transfer is completed and we have history ID */}
+        {isCompleted && transferHistoryId && destinationPlatform && (
+          <RecommendationSection
+            transferHistoryId={transferHistoryId}
+            destinationPlatform={destinationPlatform}
+            destinationPlaylistId={transfer?.createdPlaylistId}
+            onAddToPlaylist={handleAddTracksToPlaylist}
+          />
+        )}
+
+        <div className="flex justify-center gap-3 mt-8">
           <Button
             size="lg"
             onClick={handleNewShift}
