@@ -85,6 +85,7 @@ export default function RecommendationSection({
     console.log('[RecommendationSection] Selected tracks:', Array.from(selectedTracks))
     console.log('[RecommendationSection] destinationPlaylistId:', destinationPlaylistId)
     console.log('[RecommendationSection] destinationPlatform:', destinationPlatform)
+    console.log('[RecommendationSection] transferHistoryId:', transferHistoryId)
     
     if (selectedTracks.size === 0) {
       console.warn('[RecommendationSection] No tracks selected')
@@ -98,12 +99,46 @@ export default function RecommendationSection({
       return;
     }
 
+    if (!transferHistoryId) {
+      console.error('[RecommendationSection] ❌ transferHistoryId is not available')
+      showToast('Transfer history ID not available. Tracks will be added but may not appear in history.', 'warning');
+    }
+
     setAddingTracks(true);
     try {
       const trackIds = Array.from(selectedTracks);
+      // Get track details for selected tracks
+      const selectedTrackDetails = recommendations.filter(track => trackIds.includes(track.id));
+      
+      // Build payload - always include transferHistoryId if available
+      const basePayload: any = {
+        playlistId: destinationPlaylistId
+      };
+      
+      // Always include transferHistoryId if it's available (even if 0, though that shouldn't happen)
+      if (transferHistoryId != null && transferHistoryId !== undefined) {
+        basePayload.transferHistoryId = transferHistoryId;
+      }
+      
       const payload = destinationPlatform === 'spotify' 
-        ? { playlistId: destinationPlaylistId, trackIds }
-        : { playlistId: destinationPlaylistId, videoIds: trackIds };
+        ? { 
+            ...basePayload,
+            trackIds
+          }
+        : { 
+            ...basePayload,
+            videoIds: trackIds,
+            // Include track details for YouTube to help with history saving
+            trackDetails: selectedTrackDetails.map(track => ({
+              id: track.id,
+              title: track.title,
+              artist: track.artist,
+              album: track.album
+            }))
+          };
+      
+      console.log('[RecommendationSection] Payload being sent:', JSON.stringify(payload, null, 2));
+      console.log('[RecommendationSection] transferHistoryId value:', transferHistoryId, 'type:', typeof transferHistoryId);
 
       await apiJson(`/api/playlists/${destinationPlatform}/add-tracks`, {
         method: 'POST',
