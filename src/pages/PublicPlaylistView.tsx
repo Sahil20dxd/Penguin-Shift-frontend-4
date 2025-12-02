@@ -12,6 +12,7 @@ import type { PublicPlaylist } from "@/types/publicPlaylist";
 import { getPublicPlaylistById, getPublicPlaylistTracks } from "@/api/publicPlaylists";
 import { motion } from "framer-motion";
 import { format } from 'date-fns';
+import { getErrorMessage } from "@/utils/userMessages";
 
 // Platform-specific badge colors
 const platformColors: Record<string, string> = {
@@ -79,11 +80,8 @@ export default function PublicPlaylistView() {
         setPlaylist(playlistData);
       } catch (err: any) {
         console.error('[PublicPlaylistView] Error fetching playlist:', err);
-        if (err.message?.includes('404') || err.message?.includes('not found')) {
-          setError("Playlist not found or not publicly accessible");
-        } else {
-          setError("Failed to load playlist. Please try again later.");
-        }
+        const friendlyError = getErrorMessage(err, 'load playlist');
+        setError(friendlyError);
       } finally {
         setLoading(false);
       }
@@ -111,13 +109,8 @@ export default function PublicPlaylistView() {
         setTracks(fetchedTracks);
       } catch (error: any) {
         console.error('[PublicPlaylistView] Error fetching tracks:', error);
-        if (error.message?.includes('401')) {
-          setTracksError('Track details not available');
-        } else if (error.message?.includes('404')) {
-          setTracksError('Track details not available');
-        } else {
-          setTracksError('Failed to load tracks. Please try again later.');
-        }
+        const friendlyError = getErrorMessage(error, 'load tracks');
+        setTracksError(friendlyError);
       } finally {
         setLoadingTracks(false);
       }

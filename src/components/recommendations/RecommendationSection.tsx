@@ -10,6 +10,7 @@ import { getRecommendations } from '@/api/recommendations';
 import type { RecommendedTrack } from '@/types/recommendations';
 import { useToast } from '@/hooks/useToast';
 import { apiJson } from '@/components/shift/apiClient';
+import { getErrorMessage } from '@/utils/userMessages';
 
 interface RecommendationSectionProps {
   transferHistoryId: number;
@@ -59,7 +60,8 @@ export default function RecommendationSection({
         stack: err?.stack,
         response: err?.response
       });
-      setError('Failed to load recommendations. Please try again later.');
+      const friendlyError = getErrorMessage(err, 'load recommendations');
+      setError(friendlyError);
     } finally {
       setLoading(false);
       console.log('[RecommendationSection] Fetch complete. Loading set to false.')
@@ -115,7 +117,8 @@ export default function RecommendationSection({
       fetchRecommendations();
     } catch (err: any) {
       console.error('[RecommendationSection] Error adding tracks:', err);
-      showToast('Failed to add tracks to playlist. Please try again.', 'error');
+      const friendlyError = getErrorMessage(err, 'add tracks to playlist');
+      showToast(friendlyError, 'error');
     } finally {
       setAddingTracks(false);
     }

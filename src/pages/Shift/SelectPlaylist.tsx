@@ -35,6 +35,7 @@ import {
   fetchPlaylists,
 } from "@/components/shift/apiClient";
 import { getApiBase } from "@/utils/apiConfig";
+import { getErrorMessage } from "@/utils/userMessages";
 
 // platform union
 type Platform = "spotify" | "youtube";
@@ -105,11 +106,8 @@ export default function SelectPlaylist() {
       }
     } catch (err: any) {
       console.error("Link check failed:", err);
-      setError(
-        `We couldn’t verify your ${
-          platform === "spotify" ? "Spotify" : "YouTube"
-        } connection. Please reconnect your account.`
-      );
+      const friendlyError = getErrorMessage(err, `verify your ${platform === 'spotify' ? 'Spotify' : 'YouTube Music'} connection`);
+      setError(friendlyError);
       setIsLinked(false);
       setPlaylists([]);
     } finally {
@@ -141,7 +139,7 @@ export default function SelectPlaylist() {
       const resp = (await getLinkUrl(localPlatform)) as { url: string };
       const url = resp?.url;
       if (!url) {
-        setError("Failed to create authorization URL.");
+        setError("Unable to start the connection process. Please try again.");
         return;
       }
 
@@ -211,17 +209,14 @@ export default function SelectPlaylist() {
           try {
             popup.close();
           } catch {}
-          setError("OAuth connection timed out. Please try again.");
+          setError("Connection timed out. Please try connecting again.");
         }
       }, 120000);
     } catch (err: any) {
       const msg = err?.message || String(err);
       console.error("OAuth connection failed:", err);
-      setError(
-        `Unable to connect to ${
-          localPlatform === "spotify" ? "Spotify" : "YouTube Music"
-        }. Please try again.`
-      );
+      const friendlyError = getErrorMessage(err, `connect to ${localPlatform === "spotify" ? "Spotify" : "YouTube Music"}`);
+      setError(friendlyError);
     }
   }
 

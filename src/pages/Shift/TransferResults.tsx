@@ -25,6 +25,7 @@ import {
 import RecommendationSection from "@/components/recommendations/RecommendationSection";
 import { getTransferHistory } from "@/api/transferHistory";
 import { apiJson } from "@/components/shift/apiClient";
+import { getErrorMessage, getTransferPhaseMessage, getProgressMessage, TransferStatusMessages } from "@/utils/userMessages";
 
 // Result type - matches backend response
 type TransferResult = {
@@ -144,25 +145,20 @@ export default function TransferResults() {
 
         const msg = String(err?.message || "");
 
-        // --- Detect expired Spotify token or auth error ---
+        // --- Detect expired token or auth error ---
+        const friendlyError = getErrorMessage(err, 'update transfer status')
         if (
           msg.includes("401") ||
-          msg.toLowerCase().includes("spotify authorization") ||
-          msg.toLowerCase().includes("unauthorized")
+          msg.toLowerCase().includes("authorization") ||
+          msg.toLowerCase().includes("unauthorized") ||
+          msg.toLowerCase().includes("session") ||
+          msg.toLowerCase().includes("expired")
         ) {
           console.log('[TransferResults] ❌ Auth error - stopping polling');
           shouldStopPollingRef.current = true; // Set ref
 
-          // Note: Tokens are now stored in HTTP-only cookies (not accessible to JS)
-          // Backend will handle token cleanup on logout/expiry
-
-          setError(
-            "Your connection has expired. Please reconnect your account."
-          );
-          showToast(
-            "Your connection expired. Please reconnect.",
-            "error"
-          );
+          setError("Your connection has expired. Please reconnect your account.");
+          showToast("Your connection expired. Please reconnect.", "error");
 
           // stop polling
           if (pollHandle.current) {
@@ -179,9 +175,8 @@ export default function TransferResults() {
         console.log('[TransferResults] ❌ Network error - stopping polling');
         shouldStopPollingRef.current = true; // Set ref
 
-        setError(
-          "We couldn't update your transfer status. Please check your connection or try again shortly."
-        );
+        const friendlyError = getErrorMessage(err, 'update transfer status')
+        setError(friendlyError);
         if (pollHandle.current) {
           clearInterval(pollHandle.current);
           pollHandle.current = null;
@@ -512,10 +507,10 @@ export default function TransferResults() {
                   <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
                   <div>
                     <p className="font-semibold text-lg">
-                      {getPhase()}
+                      {getTransferPhaseMessage(getPhase())}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {getProcessed()} of {getTotal()} songs
+                      {getProgressMessage(getProcessed(), getTotal(), getPhase())}
                     </p>
                   </div>
                 </div>
@@ -527,7 +522,7 @@ export default function TransferResults() {
                 />
               </div>
               <p className="text-center text-gray-600 text-sm">
-                {getPercent()}% complete
+                {getPercent()}% complete - Please wait while we transfer your music...
               </p>
             </>
           )}

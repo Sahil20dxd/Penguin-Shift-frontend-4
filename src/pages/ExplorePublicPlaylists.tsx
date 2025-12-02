@@ -17,6 +17,7 @@ import PlaylistDetailsDrawer from "@/components/explore/PlaylistDetailsDrawer";
 import type { PublicPlaylist } from "@/types/publicPlaylist";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { SEOHead } from "@/components/SEOHead";
+import { getErrorMessage } from "@/utils/userMessages";
 
 type FiltersState = {
   platform: string;
@@ -119,23 +120,8 @@ export default function ExplorePublicPlaylists() {
         setLoading(false);
       } catch (err: any) {
         console.error('[Explore] Failed to load public playlists:', err);
-
-        // Provide specific error messages based on error type
-        let errorMessage = "Failed to load public playlists. ";
-
-        if (err.message.includes('401')) {
-          errorMessage += "Authentication issue detected. This endpoint should be public.";
-        } else if (err.message.includes('404')) {
-          errorMessage += "Backend endpoint not found. Please check backend configuration.";
-        } else if (err.message.includes('500')) {
-          errorMessage += "Server error. Please try again later or contact support.";
-        } else if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
-          errorMessage += "Cannot connect to backend. Please check if backend is running.";
-        } else {
-          errorMessage += err.message;
-        }
-
-        setError(errorMessage);
+        const friendlyError = getErrorMessage(err, 'load playlists');
+        setError(friendlyError);
         setPlaylists([]);
         setTotalResults(0);
         setTotalPages(1);

@@ -4,6 +4,7 @@
 
 import { getApiBase } from '@/utils/apiConfig'
 import { addCsrfToken, getCsrfToken } from '@/utils/csrf'
+import { getUserFriendlyError } from '@/utils/userMessages'
 
 const API_BASE = getApiBase()
 
@@ -134,14 +135,15 @@ export async function apiJson(path: string, options: RequestInit = {}) {
         }
       }
     } catch {
-      // Use status-based messages if parsing fails
-      const statusMessages: Record<number, string> = {
-        401: 'Authentication required. Please log in again.',
-        403: 'Access denied. You do not have permission to perform this action.',
-        404: 'Resource not found.',
-      }
-      errorMessage = statusMessages[res.status] || (res.status >= 500 ? 'Server error. Please try again later.' : errorMessage)
+      // Use user-friendly status-based messages if parsing fails
+      errorMessage = getUserFriendlyError(res.status, errorMessage)
     }
+    
+    // Clean up any remaining technical terms
+    errorMessage = errorMessage
+      .replace(/HTTP \d{3}/gi, '')
+      .replace(/\d{3} (Unauthorized|Forbidden|Not Found|Internal Server Error)/gi, '')
+      .trim()
     
     const error = new Error(errorMessage) as any
     error.status = res.status
@@ -189,14 +191,9 @@ export async function apiJsonPublic(path: string, options: RequestInit = {}) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    const statusMessages: Record<number, string> = {
-      401: 'Authentication required',
-      403: 'Access forbidden',
-      404: 'Resource not found',
-    }
-    const errorMessage = statusMessages[res.status] || (res.status >= 500 ? 'Server error' : text || res.statusText)
+    const errorMessage = getUserFriendlyError(res.status, text || res.statusText)
     
-    const error = new Error(`HTTP ${res.status}: ${errorMessage}`) as any
+    const error = new Error(errorMessage) as any
     error.status = res.status
     error.statusText = res.statusText
     throw error
@@ -224,7 +221,8 @@ export async function apiBlob(path: string, options: RequestInit = {}) {
   })
   
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+    const errorMessage = getUserFriendlyError(res.status, res.statusText)
+    throw new Error(errorMessage)
   }
   
   return res.blob()

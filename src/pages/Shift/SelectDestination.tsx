@@ -46,6 +46,7 @@ import {
 import { createPageUrl } from '@/utils'
 import { checkPublicPlaylistNameAvailability } from '@/api/publicPlaylists'
 import { MUSIC_GENRES } from '@/constants/genres'
+import { getErrorMessage, getTransferPhaseMessage, getProgressMessage, TransferStatusMessages } from '@/utils/userMessages'
 
 type Platform = 'spotify' | 'youtube'
 
@@ -150,9 +151,9 @@ export default function SelectDestination() {
       setIsDestLinked(Boolean(rs?.linked))
     } catch (e: any) {
       console.error('Link check failed:', e)
-      setError(
-        `We couldn't verify your ${destinationPlatform} connection. Please try reconnecting.`
-      )
+        setError(
+          `Unable to verify your ${destinationPlatform === 'spotify' ? 'Spotify' : 'YouTube Music'} connection. Please reconnect your account.`
+        )
     } finally {
       setCheckingLink(false)
     }
@@ -164,7 +165,7 @@ export default function SelectDestination() {
     try {
       const resp = (await getLinkUrl(destinationPlatform)) as { url: string }
       if (!resp?.url) {
-        setError(`Could not get ${destinationPlatform} authorization URL.`)
+        setError(`Unable to start the connection process for ${destinationPlatform === 'spotify' ? 'Spotify' : 'YouTube Music'}. Please try again.`)
         return
       }
 
@@ -174,7 +175,7 @@ export default function SelectDestination() {
         'width=600,height=700,scrollbars=yes'
       )
       if (!popup) {
-        setError('Please allow popups in your browser.')
+        setError('Please allow popups in your browser to connect your account.')
         return
       }
 
@@ -209,7 +210,8 @@ export default function SelectDestination() {
       window.setTimeout(() => clearInterval(poll), 120000)
     } catch (e: any) {
       console.error('OAuth connection failed:', e)
-      setError(`We couldn’t connect to ${destinationPlatform}. Please try again.`)
+      const friendlyError = getErrorMessage(e, `connect to ${destinationPlatform === 'spotify' ? 'Spotify' : 'YouTube Music'}`);
+      setError(friendlyError);
     } finally {
       setCheckingLink(false)
     }
@@ -224,14 +226,14 @@ export default function SelectDestination() {
       const playlistNameError = validateTextInput(playlistName.trim())
       if (playlistNameError) {
         setPlaylistNameModerationError(playlistNameError)
-        setError('Please fix the playlist name - it contains inappropriate content.')
+        setError('The playlist name contains inappropriate content. Please choose a different name.')
         return
       }
       
       const playlistDescError = playlistDesc.trim() ? validateTextInput(playlistDesc.trim()) : null
       if (playlistDescError) {
         setPlaylistDescModerationError(playlistDescError)
-        setError('Please fix the playlist description - it contains inappropriate content.')
+        setError('The playlist description contains inappropriate content. Please revise it.')
         return
       }
     }
@@ -240,14 +242,14 @@ export default function SelectDestination() {
       const publicNameError = validateTextInput(publicPlaylistName.trim())
       if (publicNameError) {
         setPublicPlaylistNameModerationError(publicNameError)
-        setError('Please fix the public playlist name - it contains inappropriate content.')
+        setError('The public playlist name contains inappropriate content. Please choose a different name.')
         return
       }
     }
     
     // Check for any moderation errors from debounced validation
     if (playlistNameModerationError || playlistDescModerationError || publicPlaylistNameModerationError) {
-      setError('Please fix the content - it contains inappropriate words.')
+      setError('Some content contains inappropriate words. Please review and update your playlist details.')
       return
     }
     
@@ -264,6 +266,10 @@ export default function SelectDestination() {
         genre: selectedGenre,
         makePublic: makePublic
       })
+      
+      // Show initial progress message
+      setTransferPhase('Connecting')
+      setTransferPct(0)
       
       const payload = {
         sourcePlatform: sourcePlatform || 'spotify',
@@ -310,10 +316,15 @@ export default function SelectDestination() {
             destinationPlaylistId?: string
           }
           console.log('[SelectDestination] Transfer status response:', st)
-          setTransferPhase(st.phase)
-          setTransferPct(st.percent)
+          setTransferPhase(st.phase || 'Processing')
+          setTransferPct(st.percent || 0)
           setTransferStatus(st.status)
           setUnmatchedCount(st.unmatched || 0)
+          
+          // Update user with progress message
+          if (st.status === 'PENDING' || st.status === 'IN_PROGRESS' || st.status === 'RUNNING') {
+            // Progress is already shown in the UI via transferPhase and transferPct
+          }
           // Set createdPlaylistId from either createdPlaylistId or destinationPlaylistId
           if (st.createdPlaylistId) {
             console.log('[SelectDestination] Setting createdPlaylistId from status:', st.createdPlaylistId)
@@ -355,18 +366,16 @@ export default function SelectDestination() {
         response: e?.response
       })
       
-      // Handle 401 Unauthorized - user needs to re-authenticate
-      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || e?.status === 401) {
-        setError('Your session has expired. Please log in again and try again.')
+      // Use user-friendly error message
+      const friendlyError = getErrorMessage(e, 'start the transfer')
+      setError(friendlyError)
+      
+      // Handle authentication errors - redirect to login
+      if (e?.status === 401 || errorMessage.toLowerCase().includes('session') || errorMessage.toLowerCase().includes('expired')) {
         console.error('[SelectDestination] ❌ Authentication expired - user needs to log in again')
-        // Optionally redirect to login after a delay
         setTimeout(() => {
           window.location.href = '/auth'
         }, 3000)
-      } else {
-        setError(
-          'We couldn\'t start the transfer. Please check your connection and try again.'
-        )
       }
     } finally {
       setCreating(false)
@@ -378,8 +387,9 @@ export default function SelectDestination() {
     if (!transferId) return
     try {
       await downloadUnmatchedCsv(transferId)
-    } catch {
-      setError('Could not download unmatched songs CSV.')
+    } catch (e: any) {
+      const friendlyError = getErrorMessage(e, 'download unmatched songs list');
+      setError(friendlyError);
     }
   }
 
@@ -387,8 +397,9 @@ export default function SelectDestination() {
     if (!transferId) return
     try {
       await downloadUnmatchedPdf(transferId)
-    } catch {
-      setError('Could not download unmatched songs PDF.')
+    } catch (e: any) {
+      const friendlyError = getErrorMessage(e, 'download unmatched songs report');
+      setError(friendlyError);
     }
   }
 
@@ -729,8 +740,8 @@ export default function SelectDestination() {
                         <div className='flex items-center gap-3'>
                           <Loader2 className='w-5 h-5 text-blue-600 animate-spin' />
                           <div>
-                            <p className='font-semibold text-blue-900'>Transfer has started</p>
-                            <p className='text-sm text-blue-700'>Your playlists are being transferred...</p>
+                            <p className='font-semibold text-blue-900'>{TransferStatusMessages[transferStatus as keyof typeof TransferStatusMessages] || 'Transfer in progress...'}</p>
+                            <p className='text-sm text-blue-700'>{getTransferPhaseMessage(transferPhase)}</p>
                           </div>
                         </div>
                       </motion.div>
@@ -779,7 +790,7 @@ export default function SelectDestination() {
                     <div className='mb-4'>
                       <div className='flex items-center justify-between mb-2'>
                         <div className='text-sm font-medium text-gray-700'>
-                          {transferPhase}
+                          {getTransferPhaseMessage(transferPhase)}
                         </div>
                         <div className='text-sm font-semibold text-purple-600'>
                           {transferPct}%
@@ -792,7 +803,7 @@ export default function SelectDestination() {
                         />
                       </div>
                       <div className='text-xs text-gray-500 mt-1'>
-                        Transfer #{transferId}
+                        Please wait while we transfer your music...
                       </div>
                     </div>
                   )}
