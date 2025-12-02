@@ -175,7 +175,6 @@ export default function TransferResults() {
         console.log('[TransferResults] ❌ Network error - stopping polling');
         shouldStopPollingRef.current = true; // Set ref
 
-        const friendlyError = getErrorMessage(err, 'update transfer status')
         setError(friendlyError);
         if (pollHandle.current) {
           clearInterval(pollHandle.current);
