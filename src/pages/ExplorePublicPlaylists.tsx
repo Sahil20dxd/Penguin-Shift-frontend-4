@@ -224,7 +224,7 @@ export default function ExplorePublicPlaylists() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6"
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-3 md:p-4 lg:p-6 transition-colors duration-300"
       >
       <div className="max-w-7xl mx-auto">
         {toastMessage && (
@@ -233,16 +233,16 @@ export default function ExplorePublicPlaylists() {
           </div>
         )}
 
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
+        <div className="mb-4 md:mb-6 lg:mb-8">
+          <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 md:mb-2">
             Explore Public Playlists
           </h1>
-          <p className="text-sm md:text-base text-gray-600">
+          <p className="text-xs md:text-sm lg:text-base text-gray-600 dark:text-gray-400">
             Discover and share playlists from the PenguinShift community
           </p>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
@@ -250,7 +250,7 @@ export default function ExplorePublicPlaylists() {
           />
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <FiltersBar filters={filters} onFilterChange={handleFilterChange} />
         </div>
 
@@ -389,7 +389,7 @@ export default function ExplorePublicPlaylists() {
                   }
                 }
               }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 lg:gap-6"
             >
               <AnimatePresence mode="popLayout">
                 {paginatedPlaylists.map((playlist, index) => (

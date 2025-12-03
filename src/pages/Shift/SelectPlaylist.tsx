@@ -429,7 +429,7 @@ export default function SelectPlaylist() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6"
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-3 md:p-4 lg:p-6 transition-colors duration-300"
     >
       <div className="max-w-4xl mx-auto">
         <motion.div 
@@ -527,21 +527,21 @@ export default function SelectPlaylist() {
           )}
         </AnimatePresence>
 
-        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
-          <h2 className="text-base md:text-lg font-semibold mb-4">Source Platform</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-3 md:p-4 lg:p-6 mb-4 md:mb-6 transition-colors duration-300">
+          <h2 className="text-sm md:text-base lg:text-lg font-semibold mb-3 md:mb-4 text-gray-900 dark:text-gray-100">Source Platform</h2>
 
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">
             <Button
               variant={localPlatform === "spotify" ? "default" : "outline"}
               onClick={() => void handlePlatformSwitch("spotify")}
-              className="flex-1 py-3 md:py-6 text-base md:text-lg"
+              className="flex-1 py-2.5 md:py-3 lg:py-6 text-sm md:text-base lg:text-lg min-h-[44px] md:min-h-0"
             >
               Spotify
             </Button>
             <Button
               variant={localPlatform === "youtube" ? "default" : "outline"}
               onClick={() => void handlePlatformSwitch("youtube")}
-              className="flex-1 py-3 md:py-6 text-base md:text-lg"
+              className="flex-1 py-2.5 md:py-3 lg:py-6 text-sm md:text-base lg:text-lg min-h-[44px] md:min-h-0"
             >
               YouTube Music
             </Button>
@@ -583,7 +583,7 @@ export default function SelectPlaylist() {
                     className="w-5 h-5 text-green-600 flex-shrink-0"
                     aria-hidden="true"
                   />
-                  <span className="text-sm md:text-base text-green-700 font-medium">
+                  <span className="text-xs md:text-sm lg:text-base text-green-700 dark:text-green-400 font-medium">
                     Connected to{" "}
                     {localPlatform === "spotify" ? "Spotify" : "YouTube Music"}
                   </span>
@@ -631,7 +631,7 @@ export default function SelectPlaylist() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search your playlists..."
-                  className="pl-10 h-12 md:h-10 text-base md:text-sm"
+                  className="pl-10 h-11 md:h-10 text-sm md:text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-slate-600"
                   aria-label="Search your playlists"
                 />
               </motion.div>
@@ -710,9 +710,9 @@ export default function SelectPlaylist() {
                         <div
                           className={
                             (selected
-                              ? "bg-purple-50 border-purple-500 "
-                              : "bg-white hover:bg-gray-50 ") +
-                            "p-4 cursor-pointer transition-all"
+                              ? "bg-purple-50 dark:bg-purple-900/30 border-purple-500 dark:border-purple-400 "
+                              : "bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 ") +
+                            "p-3 md:p-4 cursor-pointer transition-all"
                           }
                           onClick={() => handleTogglePlaylist(pl.id)}
                           role="button"
@@ -735,15 +735,15 @@ export default function SelectPlaylist() {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-900 truncate">
+                              <h3 className="font-semibold text-sm md:text-base text-gray-900 dark:text-gray-100 truncate">
                                 {pl.name}
                               </h3>
                               <div className="flex items-center gap-2">
-                                <p className={`text-sm ${pl.songCount > MAX_SONGS_PER_PLAYLIST ? 'text-amber-600 font-medium' : 'text-gray-500'}`}>
+                                <p className={`text-xs md:text-sm ${pl.songCount > MAX_SONGS_PER_PLAYLIST ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                                   {pl.songCount} songs
                                 </p>
                                 {pl.songCount > MAX_SONGS_PER_PLAYLIST && (
-                                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                                  <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
                                     Exceeds limit
                                   </span>
                                 )}

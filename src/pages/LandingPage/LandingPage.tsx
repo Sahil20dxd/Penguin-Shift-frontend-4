@@ -47,10 +47,10 @@ export default function LandingPage() {
       />
       <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-indigo-500/10" />
+      <section className="relative overflow-hidden py-12 md:py-20 lg:py-32">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-indigo-500/10 dark:from-purple-600/20 dark:to-indigo-500/20" />
 
-        <div className="relative max-w-7xl mx-auto px-6 text-center">
+        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -80,17 +80,17 @@ export default function LandingPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Link to={createPageUrl("Dashboard")}>
+            <Link to={createPageUrl("Dashboard")} className="inline-block">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white px-12 py-6 rounded-2xl text-xl font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 group"
+                className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white px-8 md:px-12 py-4 md:py-6 rounded-2xl text-base md:text-xl font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 group min-h-[44px] md:min-h-0 w-full sm:w-auto"
               >
                 SHIFT
                 <motion.span
                   animate={{ x: [0, 5, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
                 >
-                  <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="ml-2 md:ml-3 w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform" />
                 </motion.span>
               </Button>
             </Link>
@@ -99,8 +99,8 @@ export default function LandingPage() {
       </section>
 
       {/* Supported Platforms */}
-      <section className="py-20 bg-white/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-12 md:py-20 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

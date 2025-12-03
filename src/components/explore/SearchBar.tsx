@@ -52,7 +52,7 @@ export default function SearchBar({
           if (e.key === "Enter") onChange(value);
         }}
         placeholder="Search public playlists…"
-        className="pl-10 pr-10 h-12 md:h-11 text-base md:text-sm border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
+        className="pl-10 pr-10 h-11 md:h-11 text-sm md:text-sm border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:border-purple-500 dark:focus:border-purple-400 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all duration-200"
         aria-label="Search public playlists"
         autoComplete="off"
       />

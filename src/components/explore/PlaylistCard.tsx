@@ -76,7 +76,7 @@ export default function PlaylistCard({
       style={{ willChange: 'transform' }}
     >
       <Card 
-        className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-200 cursor-pointer group"
+        className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer group"
         onClick={() => onViewDetails(playlist)}
       >
         {/* Cover image */}
@@ -135,30 +135,30 @@ export default function PlaylistCard({
         </div>
 
         {/* Content */}
-        <CardContent className="p-4">
+        <CardContent className="p-3 md:p-4">
           <h3
-            className="font-bold text-lg text-gray-900 truncate mb-2"
+            className="font-bold text-base md:text-lg text-gray-900 dark:text-gray-100 truncate mb-1 md:mb-2"
             title={playlist.title}
           >
             {playlist.title}
           </h3>
 
-          <p className="text-sm text-gray-600 mb-3 truncate">
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2 md:mb-3 truncate">
             by {playlist.ownerName || "Anonymous"}
           </p>
 
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2 md:mb-3">
             <Badge className={platformClass + " border text-xs"}>
               {platformName}
             </Badge>
             {playlist.genre && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs dark:border-slate-600 dark:text-gray-300">
                 {playlist.genre}
               </Badge>
             )}
           </div>
 
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center justify-between text-xs md:text-sm text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1">
               <Music2 className="w-4 h-4" aria-hidden="true" />
               {playlist.trackCount} tracks

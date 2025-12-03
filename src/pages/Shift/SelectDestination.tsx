@@ -518,13 +518,13 @@ export default function SelectDestination() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className='min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 p-4 md:p-6'
+      className='min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-3 md:p-4 lg:p-6 transition-colors duration-300'
     >
       <div className='max-w-4xl mx-auto'>
-        <div className='mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
-          <h1 className='text-2xl md:text-3xl font-bold text-gray-900'>Select Destination</h1>
-          <Link to={createPageUrl('SelectPlaylist')}>
-            <Button variant='outline' className='w-full sm:w-auto py-3 md:py-6'>
+        <div className='mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4'>
+          <h1 className='text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100'>Select Destination</h1>
+          <Link to={createPageUrl('SelectPlaylist')} className='w-full sm:w-auto'>
+            <Button variant='outline' className='w-full sm:w-auto py-2.5 md:py-3 lg:py-6 min-h-[44px] md:min-h-0 text-sm md:text-base dark:border-slate-600 dark:text-gray-300'>
               <ArrowLeft className='w-4 h-4 mr-2' /> Back
             </Button>
           </Link>
@@ -539,8 +539,8 @@ export default function SelectDestination() {
           </div>
         )}
 
-        <div className='bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6'>
-          <div className='mb-4 text-sm md:text-base text-gray-600'>
+        <div className='bg-white dark:bg-slate-800 rounded-xl shadow-lg p-3 md:p-4 lg:p-6 mb-4 md:mb-6 transition-colors duration-300'>
+          <div className='mb-3 md:mb-4 text-xs md:text-sm lg:text-base text-gray-600 dark:text-gray-400'>
             {selectedPlaylistIds.length} playlist
             {selectedPlaylistIds.length !== 1 ? 's' : ''} selected for transfer
           </div>
@@ -565,9 +565,9 @@ export default function SelectDestination() {
             </div>
           ) : (
             <>
-              <div className='flex items-center gap-2 mb-4 p-3 bg-green-50 rounded-lg border border-green-200'>
-                <CheckCircle2 className='w-5 h-5 text-green-600' />
-                <span className='text-green-700 font-medium'>
+              <div className='flex items-center gap-2 mb-3 md:mb-4 p-2.5 md:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'>
+                <CheckCircle2 className='w-4 h-4 md:w-5 md:h-5 text-green-600 dark:text-green-400' />
+                <span className='text-xs md:text-sm lg:text-base text-green-700 dark:text-green-400 font-medium'>
                   Connected to {destName}
                 </span>
               </div>
@@ -584,63 +584,63 @@ export default function SelectDestination() {
               </label>
 
               {makeNewPlaylist && (
-                <div className='space-y-3 mb-6'>
+                <div className='space-y-3 mb-4 md:mb-6'>
                   <div>
-                    <div className='text-sm mb-1'>Playlist Name *</div>
+                    <div className='text-xs md:text-sm mb-1 text-gray-700 dark:text-gray-300'>Playlist Name *</div>
                     <Input
                       value={playlistName}
                       onChange={(e) => setPlaylistName(e.target.value)}
                       onValidationError={(error) => setPlaylistNameModerationError(error)}
                       placeholder='My Transferred Playlist'
-                      className={playlistNameModerationError ? 'border-red-500 focus:ring-red-200' : ''}
+                      className={`h-11 md:h-10 text-sm md:text-base bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-slate-600 ${playlistNameModerationError ? 'border-red-500 focus:ring-red-200' : ''}`}
                     />
                     {playlistNameModerationError && (
-                      <p className='text-xs text-red-600 mt-1'>{playlistNameModerationError}</p>
+                      <p className='text-xs text-red-600 dark:text-red-400 mt-1'>{playlistNameModerationError}</p>
                     )}
                   </div>
                   <div>
-                    <div className='text-sm mb-1'>Description (optional)</div>
+                    <div className='text-xs md:text-sm mb-1 text-gray-700 dark:text-gray-300'>Description (optional)</div>
                     <Textarea
-                      className={`w-full border rounded-md px-3 py-2 ${playlistDescModerationError ? 'border-red-500 focus:ring-red-200' : ''}`}
-                      rows={4}
+                      className={`w-full border rounded-md px-3 py-2 text-sm md:text-base bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-slate-600 ${playlistDescModerationError ? 'border-red-500 focus:ring-red-200' : ''}`}
+                      rows={3}
                       value={playlistDesc}
                       onChange={(e) => setPlaylistDesc(e.target.value)}
                       onValidationError={(error) => setPlaylistDescModerationError(error)}
                       placeholder='Describe your playlist…'
                     />
                     {playlistDescModerationError && (
-                      <p className='text-xs text-red-600 mt-1'>{playlistDescModerationError}</p>
+                      <p className='text-xs text-red-600 dark:text-red-400 mt-1'>{playlistDescModerationError}</p>
                     )}
                   </div>
                 </div>
               )}
 
               {/* Genre Selection - Mandatory */}
-              <div className='mb-6'>
-                <div className='text-sm mb-1 font-medium'>
+              <div className='mb-4 md:mb-6'>
+                <div className='text-xs md:text-sm mb-1 font-medium text-gray-700 dark:text-gray-300'>
                   Genre <span className='text-red-500'>*</span>
                 </div>
                 <Select value={selectedGenre} onValueChange={setSelectedGenre}>
-                  <SelectTrigger className='w-full bg-white border-gray-300 hover:border-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500'>
+                  <SelectTrigger className='w-full h-11 md:h-10 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-slate-600 hover:border-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-sm md:text-base'>
                     <SelectValue placeholder='Select a genre' />
                   </SelectTrigger>
-                  <SelectContent className='bg-white border-gray-200 shadow-lg z-50'>
+                  <SelectContent className='bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-lg z-50'>
                     {MUSIC_GENRES.map((genre) => (
-                      <SelectItem key={genre} value={genre} className='hover:bg-gray-100 focus:bg-gray-100'>
+                      <SelectItem key={genre} value={genre} className='hover:bg-gray-100 dark:hover:bg-slate-700 focus:bg-gray-100 dark:focus:bg-slate-700'>
                         {genre}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {!selectedGenre && (
-                  <p className='text-xs text-gray-500 mt-1'>
+                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
                     Please select a genre to continue
                   </p>
                 )}
               </div>
 
               {/* Make Public Toggle - Mandatory */}
-              <div className='mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50'>
+              <div className='mb-4 md:mb-6 p-3 md:p-4 border border-gray-200 dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-900/50'>
                 <label className='flex items-start gap-3 cursor-pointer'>
                   <input
                     type='checkbox'
@@ -654,12 +654,12 @@ export default function SelectDestination() {
                     className='mt-1'
                   />
                   <div className='flex-1'>
-                    <div className='flex items-center gap-2 font-medium'>
-                      <Globe className='w-4 h-4 text-purple-600' />
+                    <div className='flex items-center gap-2 font-medium text-sm md:text-base text-gray-900 dark:text-gray-100'>
+                      <Globe className='w-4 h-4 text-purple-600 dark:text-purple-400' />
                       <span>Make this playlist public</span>
                       <span className='text-red-500'>*</span>
                     </div>
-                    <p className='text-xs text-gray-600 mt-1'>
+                    <p className='text-xs text-gray-600 dark:text-gray-400 mt-1'>
                       Share your playlist with the PenguinShift community. Other users will be able to discover and view your playlist in the Explore section.
                     </p>
                   </div>
@@ -724,7 +724,7 @@ export default function SelectDestination() {
                 <Button
                   disabled={!canStart || creating}
                   onClick={() => void handleStartTransfer()}
-                  className='bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 disabled:opacity-50'
+                  className='w-full sm:w-auto bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 disabled:opacity-50 py-2.5 md:py-3 lg:py-6 min-h-[44px] md:min-h-0 text-sm md:text-base lg:text-lg'
                 >
                   {creating && (
                     <Loader2 className='w-4 h-4 mr-2 animate-spin' />
@@ -749,7 +749,7 @@ export default function SelectDestination() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className='mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg'
+                        className='mb-3 md:mb-4 p-3 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-l-4 border-blue-500 dark:border-blue-400 rounded-lg'
                       >
                         <div className='flex items-center gap-3'>
                           <Loader2 className='w-5 h-5 text-blue-600 animate-spin' />
@@ -765,7 +765,7 @@ export default function SelectDestination() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className='mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg'
+                        className='mb-3 md:mb-4 p-3 md:p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-l-4 border-green-500 dark:border-green-400 rounded-lg'
                       >
                         <div className='flex items-center gap-3'>
                           <CheckCircle className='w-5 h-5 text-green-600' />
@@ -786,7 +786,7 @@ export default function SelectDestination() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className='mb-4 p-4 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg'
+                        className='mb-3 md:mb-4 p-3 md:p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-l-4 border-red-500 dark:border-red-400 rounded-lg'
                       >
                         <div className='flex items-center gap-3'>
                           <AlertCircle className='w-5 h-5 text-red-600' />

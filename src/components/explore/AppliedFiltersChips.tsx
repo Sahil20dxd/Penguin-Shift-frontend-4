@@ -51,12 +51,12 @@ export default function AppliedFiltersChips({
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
-      className="flex flex-wrap items-center gap-2 mb-4"
+      className="flex flex-wrap items-center gap-2 mb-3 md:mb-4"
     >
       <motion.span 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="text-sm font-medium text-gray-600"
+        className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400"
       >
         Active filters:
       </motion.span>
@@ -74,7 +74,7 @@ export default function AppliedFiltersChips({
             >
               <Badge
                 variant="secondary"
-                className="bg-purple-100 text-purple-800 hover:bg-purple-200 pl-3 pr-2 py-1 gap-2 transition-colors cursor-default"
+                className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 pl-2 md:pl-3 pr-1.5 md:pr-2 py-1 gap-1.5 md:gap-2 transition-colors cursor-default text-xs"
               >
                 <span className="text-xs">
                   {filterLabels[typedKey]}: <strong>{value}</strong>
@@ -83,7 +83,7 @@ export default function AppliedFiltersChips({
                   whileHover={{ scale: 1.2, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => onRemoveFilter(typedKey)}
-                  className="hover:bg-purple-300 rounded-full p-0.5 transition-colors"
+                  className="hover:bg-purple-300 dark:hover:bg-purple-700 rounded-full p-0.5 transition-colors min-w-[20px] min-h-[20px] flex items-center justify-center"
                   aria-label={`Remove ${filterLabels[typedKey]} filter`}
                 >
                   <X className="w-3 h-3" />
@@ -105,7 +105,7 @@ export default function AppliedFiltersChips({
             variant="ghost"
             size="sm"
             onClick={onClearAll}
-            className="text-xs text-gray-600 hover:text-gray-900"
+            className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 min-h-[32px] md:min-h-0 px-2 md:px-3"
           >
             Clear all
           </Button>

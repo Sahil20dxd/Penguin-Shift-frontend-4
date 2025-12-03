@@ -80,16 +80,16 @@ export default function MyProfile() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50"
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300"
     >
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-6 md:py-8 lg:py-12">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-3 md:gap-4">
           <div className="flex items-center justify-between w-full md:w-auto">
             <motion.h1
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-3xl md:text-4xl font-bold text-gray-900"
+              className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 dark:text-gray-100"
             >
               My Profile
             </motion.h1>
@@ -130,7 +130,7 @@ export default function MyProfile() {
           {/* New Shift Button - Show for regular users on both mobile and desktop */}
           {user?.role !== 'ADMIN' && user?.role !== 'CURATOR' && (
             <Link to={createPageUrl("Dashboard")} className="w-full md:w-auto">
-              <Button className="w-full md:w-auto bg-black hover:bg-gray-800 text-white px-6 md:px-8 py-4 md:py-6 rounded-xl text-base md:text-lg font-semibold shadow-lg">
+              <Button className="w-full md:w-auto bg-black hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 text-white px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-6 rounded-xl text-sm md:text-base lg:text-lg font-semibold shadow-lg min-h-[44px] md:min-h-0">
                 <Repeat className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                 New Shift
               </Button>
@@ -144,8 +144,8 @@ export default function MyProfile() {
         </div>
 
         {/* Mobile Current Tab Title */}
-        <div className="md:hidden mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="md:hidden mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100">
             {getTabTitle()}
           </h2>
         </div>

@@ -560,11 +560,11 @@ export default function PublicPlaylistDestination() {
     const isDestLinked = destinationPlatform === 'spotify' ? isSpotifyLinked : isYouTubeLinked
 
     return (
-      <div className='min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6'>
+      <div className='min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-800 p-3 md:p-4 lg:p-6 transition-colors duration-300'>
         <div className='max-w-4xl mx-auto'>
-          <div className='mb-6 flex items-center justify-between'>
-            <h1 className='text-3xl font-bold text-gray-900'>Select Destination</h1>
-            <Button variant='outline' onClick={() => navigate('/shift/public-destination', { state: { playlist, tracks }, replace: true })}>
+          <div className='mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4'>
+            <h1 className='text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100'>Select Destination</h1>
+            <Button variant='outline' onClick={() => navigate('/shift/public-destination', { state: { playlist, tracks }, replace: true })} className='w-full sm:w-auto py-2.5 md:py-3 lg:py-6 min-h-[44px] md:min-h-0 text-sm md:text-base dark:border-slate-600 dark:text-gray-300'>
               <ArrowLeft className='w-4 h-4 mr-2' /> Back
             </Button>
           </div>
@@ -578,8 +578,8 @@ export default function PublicPlaylistDestination() {
             </div>
           )}
 
-          <div className='bg-white rounded-xl shadow-lg p-6 mb-6'>
-            <div className='mb-4 text-sm text-gray-600'>
+          <div className='bg-white dark:bg-slate-800 rounded-xl shadow-lg p-3 md:p-4 lg:p-6 mb-4 md:mb-6 transition-colors duration-300'>
+            <div className='mb-3 md:mb-4 text-xs md:text-sm text-gray-600 dark:text-gray-400'>
               Transferring playlist: <span className='font-semibold'>{playlist.title}</span>
             </div>
 
