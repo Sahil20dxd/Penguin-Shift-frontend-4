@@ -26,6 +26,7 @@ import {
   ChevronUp,
   RefreshCw,
   PlugZap,
+  AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useShift } from "@/components/shift/ShiftContext";
@@ -79,7 +80,10 @@ export default function SelectPlaylist() {
 
   const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quotaWarning, setQuotaWarning] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
+  
+  const MAX_SONGS_PER_PLAYLIST = 20;
 
   // initial + on platform switch
   useEffect(() => {
@@ -126,6 +130,7 @@ export default function SelectPlaylist() {
     setPlaylists([]);
     setExpandedPlaylist(null);
     setError(null);
+    setQuotaWarning(null);
     updateState({
       sourcePlatform: platform,
       selectedPlaylistIds: [],
@@ -246,21 +251,63 @@ export default function SelectPlaylist() {
     }
   }
 
-  function handleTogglePlaylist(playlistId: string) {
-    const newSelected = selectedPlaylistIds.includes(playlistId)
-      ? selectedPlaylistIds.filter((id) => id !== playlistId)
-      : [...selectedPlaylistIds, playlistId];
+  function checkQuotaWarning(selectedIds: string[]) {
+    const exceedingPlaylists = selectedIds
+      .map((id) => playlists.find((p) => p.id === id))
+      .filter((p) => p && p.songCount > MAX_SONGS_PER_PLAYLIST);
+    
+    if (exceedingPlaylists.length > 0) {
+      const playlist = exceedingPlaylists[0];
+      setQuotaWarning(
+        `One or more selected playlists exceed ${MAX_SONGS_PER_PLAYLIST} songs. Please select playlists with less than ${MAX_SONGS_PER_PLAYLIST} songs. As our web app is going through verification, we have limited quotas, so we are allowing ${MAX_SONGS_PER_PLAYLIST} songs per playlist.`
+      );
+    } else {
+      setQuotaWarning(null);
+    }
+  }
 
+  function handleTogglePlaylist(playlistId: string) {
+    // If deselecting, just remove it
+    if (selectedPlaylistIds.includes(playlistId)) {
+      const newSelected = selectedPlaylistIds.filter((id) => id !== playlistId);
+      const newInclude = { ...includeTracks };
+      delete newInclude[playlistId];
+      
+      updateState({
+        sourcePlatform: localPlatform,
+        selectedPlaylistIds: newSelected,
+        includeTracks: newInclude,
+      });
+      
+      // Clear warning if no playlists exceed limit
+      checkQuotaWarning(newSelected);
+      return;
+    }
+    
+    // If selecting, check if playlist exceeds 20 songs
+    const playlist = playlists.find((p) => p.id === playlistId);
+    if (playlist && playlist.songCount > MAX_SONGS_PER_PLAYLIST) {
+      setQuotaWarning(
+        `This playlist contains ${playlist.songCount} songs. Please select a playlist with less than ${MAX_SONGS_PER_PLAYLIST} songs. As our web app is going through verification, we have limited quotas, so we are allowing ${MAX_SONGS_PER_PLAYLIST} songs per playlist.`
+      );
+      return; // Don't select the playlist
+    }
+    
+    // Clear warning if selecting a valid playlist
+    setQuotaWarning(null);
+    
+    const newSelected = [...selectedPlaylistIds, playlistId];
     const newInclude = { ...includeTracks };
-    if (newSelected.includes(playlistId) && !newInclude[playlistId])
-      newInclude[playlistId] = "ALL";
-    else if (!newSelected.includes(playlistId)) delete newInclude[playlistId];
+    if (!newInclude[playlistId]) newInclude[playlistId] = "ALL";
 
     updateState({
       sourcePlatform: localPlatform,
       selectedPlaylistIds: newSelected,
       includeTracks: newInclude,
     });
+    
+    // Check if any selected playlist exceeds limit
+    checkQuotaWarning(newSelected);
   }
 
   function handleIncludeAllToggle(checked: boolean) {
@@ -357,7 +404,25 @@ export default function SelectPlaylist() {
     return playlists.filter((p) => p.name.toLowerCase().includes(q));
   }, [playlists, debouncedQuery]);
 
-  const canContinue = selectedPlaylistIds.length > 0;
+  // Check if any selected playlist exceeds 20 songs
+  const hasExceedingPlaylists = useMemo(() => {
+    return selectedPlaylistIds.some((id) => {
+      const playlist = playlists.find((p) => p.id === id);
+      return playlist && playlist.songCount > MAX_SONGS_PER_PLAYLIST;
+    });
+  }, [selectedPlaylistIds, playlists]);
+
+  const canContinue = selectedPlaylistIds.length > 0 && !hasExceedingPlaylists;
+  
+  // Update warning when selected playlists change
+  useEffect(() => {
+    if (selectedPlaylistIds.length > 0) {
+      checkQuotaWarning(selectedPlaylistIds);
+    } else {
+      setQuotaWarning(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlaylistIds, playlists]);
 
   return (
     <motion.div 
@@ -432,6 +497,30 @@ export default function SelectPlaylist() {
                       </motion.div>
                     )}
                   </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          {quotaWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              role="alert"
+              className="mb-6 rounded-lg border-l-4 border-amber-500 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 md:px-6 py-4 shadow-sm"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" aria-hidden="true" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-amber-800 font-semibold mb-1 text-sm md:text-base">
+                    Playlist Limit Exceeded
+                  </p>
+                  <p className="text-amber-700 text-sm">
+                    {quotaWarning}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -649,9 +738,16 @@ export default function SelectPlaylist() {
                               <h3 className="font-semibold text-gray-900 truncate">
                                 {pl.name}
                               </h3>
-                              <p className="text-sm text-gray-500">
-                                {pl.songCount} songs
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className={`text-sm ${pl.songCount > MAX_SONGS_PER_PLAYLIST ? 'text-amber-600 font-medium' : 'text-gray-500'}`}>
+                                  {pl.songCount} songs
+                                </p>
+                                {pl.songCount > MAX_SONGS_PER_PLAYLIST && (
+                                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                                    Exceeds limit
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               {selected && (
@@ -707,19 +803,33 @@ export default function SelectPlaylist() {
           <Link to={createPageUrl("LandingPage")}>
             <Button variant="outline">Back to Dashboard</Button>
           </Link>
-          <Link
-            to={createPageUrl("SelectDestination") + `?source=${localPlatform}`}
-            onClick={() => updateState({ sourcePlatform: localPlatform })}
-          >
-            <Button
-              disabled={!canContinue}
-              size="lg"
-              className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          <div className="flex flex-col items-end gap-2">
+            {hasExceedingPlaylists && (
+              <p className="text-xs text-amber-600 text-right">
+                Please deselect playlists with more than {MAX_SONGS_PER_PLAYLIST} songs
+              </p>
+            )}
+            <Link
+              to={createPageUrl("SelectDestination") + `?source=${localPlatform}`}
+              onClick={(e) => {
+                if (!canContinue) {
+                  e.preventDefault();
+                } else {
+                  updateState({ sourcePlatform: localPlatform });
+                }
+              }}
             >
-              Choose Destination
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
+              <Button
+                disabled={!canContinue}
+                size="lg"
+                className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!canContinue && hasExceedingPlaylists ? "Please deselect playlists with more than 20 songs" : undefined}
+              >
+                Choose Destination
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </motion.div>
