@@ -90,4 +90,13 @@
   ::-webkit-scrollbar-thumb:hover {
     background: rgb(148, 163, 184);
   }
+  
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgb(71, 85, 105);
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgb(100, 116, 139);
+  }
 }

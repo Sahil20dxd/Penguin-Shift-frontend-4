@@ -8,6 +8,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useToast } from "@/hooks/useToast";
 import * as RadixToast from "@radix-ui/react-toast";
 import { ShiftProvider } from "@/components/shift/ShiftContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -38,7 +39,7 @@ const PageLoader = () => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50"
+    className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300"
   >
     <motion.div
       animate={{ 
@@ -51,13 +52,13 @@ const PageLoader = () => (
       }}
       className="mb-4"
     >
-      <Loader2 className="w-12 h-12 text-purple-600" />
+      <Loader2 className="w-12 h-12 text-purple-600 dark:text-purple-400" />
     </motion.div>
     <motion.p
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.2 }}
-      className="text-gray-600 font-medium"
+      className="text-gray-600 dark:text-gray-400 font-medium"
     >
       Loading...
     </motion.p>
@@ -70,9 +71,10 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <RadixToast.Provider swipeDirection="right" duration={3500}>
-        <ShiftProvider>
-          <Suspense fallback={<PageLoader />}>
+      <ThemeProvider>
+        <RadixToast.Provider swipeDirection="right" duration={3500}>
+          <ShiftProvider>
+            <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route
               path="/"
@@ -244,14 +246,15 @@ export default function App() {
               }
             />
           </Routes>
-        </Suspense>
-      </ShiftProvider>
-      {/* Render the element (NOT <ToastUI />) */}
-      {ToastUI}
+            </Suspense>
+          </ShiftProvider>
+          {/* Render the element (NOT <ToastUI />) */}
+          {ToastUI}
 
-        {/* Radix viewport (where toasts are placed) - Mobile optimized */}
-        <RadixToast.Viewport className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[100] w-auto sm:w-[360px] max-w-[calc(100vw-2rem)] sm:max-w-[90vw] outline-none" />
-      </RadixToast.Provider>
+          {/* Radix viewport (where toasts are placed) - Mobile optimized */}
+          <RadixToast.Viewport className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[100] w-auto sm:w-[360px] max-w-[calc(100vw-2rem)] sm:max-w-[90vw] outline-none" />
+        </RadixToast.Provider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

@@ -10,6 +10,8 @@ import {
   Home,
   UserCircle,
   Globe2, // icon for Explore
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // LogRocket is a UMD module - use namespace import and access default
@@ -25,6 +27,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/context/useAuth";
+import { useTheme } from "@/context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import SkipToContent from "@/components/SkipToContent";
 import logo from "/src/assets/PenguinShift_Logo.png";
@@ -76,6 +79,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   // Smooth scroll to top on route change
   // This hook must be called before any early returns to maintain hook order
@@ -119,11 +123,11 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
     : navigationItems;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
       <SkipToContent />
       {/* Desktop Header */}
       <header 
-        className="hidden md:flex sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-purple-100 shadow-sm"
+        className="hidden md:flex sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-purple-100 dark:border-slate-700 shadow-sm transition-colors duration-300"
       >
         <div className="max-w-7xl mx-auto w-full px-6 py-4">
           <div className="flex items-center justify-between">
@@ -161,14 +165,14 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                       className={
                         "relative flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-300 " +
                         (isActive
-                          ? "text-purple-700"
-                          : "text-gray-700 hover:text-purple-600")
+                          ? "text-purple-700 dark:text-purple-400"
+                          : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400")
                       }
                     >
                       {isActive && (
                         <motion.div
                           layoutId="activeNavIndicator"
-                          className="absolute inset-0 bg-purple-100 rounded-full -z-10"
+                          className="absolute inset-0 bg-purple-100 dark:bg-purple-900/30 rounded-full -z-10"
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         />
                       )}
@@ -180,6 +184,23 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                   </div>
                 );
               })}
+
+              {/* Theme Toggle */}
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
+                  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {theme === "dark" ? (
+                    <Sun className="w-5 h-5" />
+                  ) : (
+                    <Moon className="w-5 h-5" />
+                  )}
+                </Button>
+              </motion.div>
 
               {/* Auth state-dependent buttons */}
               <AnimatePresence mode="wait">
@@ -194,7 +215,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button
                         variant="ghost"
-                        className="flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+                        className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
                         onClick={() => navigate("/profile")}
                       >
                         <UserCircle className="w-5 h-5" />
@@ -204,7 +225,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button
                         variant="ghost"
-                        className="text-gray-500 hover:text-red-600 transition-colors"
+                        className="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         onClick={logout}
                       >
                         Logout
@@ -236,7 +257,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
       {/* Mobile Header */}
       <header 
-        className="md:hidden sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-purple-100 shadow-sm"
+        className="md:hidden sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-purple-100 dark:border-slate-700 shadow-sm transition-colors duration-300"
       >
         <div className="px-4 py-4 flex items-center justify-between">
           <Link
@@ -264,14 +285,31 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                 <Menu className="w-6 h-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-white/95 backdrop-blur-xl w-full sm:w-[400px]">
+            <SheetContent side="right" className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl w-full sm:w-[400px] transition-colors duration-300">
               <SheetHeader className="text-left">
-                <SheetTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-500 bg-clip-text text-transparent">
-                  PenguinShift
-                </SheetTitle>
-                <SheetDescription className="text-sm md:text-base">
-                  Transfer your playlists between platforms
-                </SheetDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <SheetTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-500 dark:from-purple-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                      PenguinShift
+                    </SheetTitle>
+                    <SheetDescription className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+                      Transfer your playlists between platforms
+                    </SheetDescription>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleTheme}
+                    className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
+                    aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="w-5 h-5" />
+                    ) : (
+                      <Moon className="w-5 h-5" />
+                    )}
+                  </Button>
+                </div>
               </SheetHeader>
 
               <nav className="flex flex-col gap-2 mt-6 md:mt-8">
@@ -292,14 +330,14 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                         className={
                           "relative flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 " +
                           (isActive
-                            ? "text-purple-700"
-                            : "text-gray-700")
+                            ? "text-purple-700 dark:text-purple-400"
+                            : "text-gray-700 dark:text-gray-300")
                         }
                       >
                         {isActive && (
                           <motion.div
                             layoutId="activeMobileNavIndicator"
-                            className="absolute inset-0 bg-purple-50 rounded-xl -z-10"
+                            className="absolute inset-0 bg-purple-50 dark:bg-purple-900/30 rounded-xl -z-10"
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
                           />
                         )}
@@ -312,7 +350,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                   );
                 })}
 
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
                   {user ? (
                     <>
                       <Button
@@ -320,14 +358,14 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                           setIsMobileMenuOpen(false);
                           navigate("/profile");
                         }}
-                        className="w-full flex items-center gap-2 text-gray-700 hover:text-purple-700 py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150"
+                        className="w-full flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150"
                       >
                         <UserCircle className="w-5 h-5" />
                         <span className="text-base md:text-sm">{user.name}</span>
                       </Button>
                       <Button
                         variant="ghost"
-                        className="w-full text-gray-500 hover:text-red-600 mt-2 py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150"
+                        className="w-full text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 mt-2 py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150"
                         onClick={() => {
                           logout();
                           setIsMobileMenuOpen(false);
@@ -338,7 +376,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                     </>
                   ) : (
                     <Link to="/auth?mode=register" className="w-full">
-                      <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-500 text-white shadow-lg py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150">
+                      <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-500 dark:from-purple-500 dark:to-indigo-400 text-white shadow-lg py-3 md:py-6 min-h-[44px] md:min-h-0 active:scale-95 transition-transform duration-150">
                         <User className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                         <span className="text-base md:text-sm">Sign Up</span>
                       </Button>
@@ -358,7 +396,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
       {/* Footer (on LandingPage, PrivacyPolicy, and TermsOfService) */}
       {(currentPageName === "LandingPage" || currentPageName === "PrivacyPolicy" || currentPageName === "TermsOfService") && (
-        <footer className="bg-slate-900 text-white py-16">
+        <footer className="bg-slate-900 dark:bg-slate-950 text-white py-16 transition-colors duration-300">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-4">
               <Link
