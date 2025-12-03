@@ -186,27 +186,24 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
               })}
 
               {/* Theme Toggle */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("[Layout] Theme toggle clicked, current theme:", theme);
-                    toggleTheme();
-                  }}
-                  className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
-                  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-                  type="button"
-                >
-                  {theme === "dark" ? (
-                    <Sun className="w-5 h-5" />
-                  ) : (
-                    <Moon className="w-5 h-5" />
-                  )}
-                </Button>
-              </motion.div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  console.log("[Layout] Desktop theme toggle clicked, current theme:", theme);
+                  console.log("[Layout] Document dark class before:", document.documentElement.classList.contains("dark"));
+                  toggleTheme();
+                }}
+                className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-all hover:scale-105 active:scale-95"
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                type="button"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </Button>
 
               {/* Auth state-dependent buttons */}
               <AnimatePresence mode="wait">
@@ -305,13 +302,12 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       console.log("[Layout] Mobile theme toggle clicked, current theme:", theme);
+                      console.log("[Layout] Document dark class before:", document.documentElement.classList.contains("dark"));
                       toggleTheme();
                     }}
-                    className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
+                    className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-all hover:scale-105 active:scale-95"
                     aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
                     type="button"
                   >

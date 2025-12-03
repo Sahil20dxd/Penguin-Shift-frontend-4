@@ -21,65 +21,97 @@ const THEME_STORAGE_KEY = "penguinshift_theme";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // Initialize theme - apply immediately to prevent flash
-  const getInitialTheme = (): Theme => {
+  // Use function initializer to only run once
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "light";
+    
     // Check localStorage first
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-      if (stored === "light" || stored === "dark") {
-        // Apply immediately
-        const root = document.documentElement;
-        if (stored === "dark") {
-          root.classList.add("dark");
-        } else {
-          root.classList.remove("dark");
-        }
-        return stored;
+    const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+    if (stored === "light" || stored === "dark") {
+      // Apply immediately
+      const root = document.documentElement;
+      if (stored === "dark") {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
       }
-      // Fallback to system preference
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.classList.add("dark");
-        return "dark";
-      }
-      document.documentElement.classList.remove("dark");
+      return stored;
     }
+    // Fallback to system preference
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const root = document.documentElement;
+    if (prefersDark) {
+      root.classList.add("dark");
+      return "dark";
+    }
+    root.classList.remove("dark");
     return "light";
-  };
-
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  });
 
   // Apply theme to document whenever it changes
   useEffect(() => {
     if (typeof window === "undefined") return;
     
     const root = document.documentElement;
-    if (theme === "dark") {
+    const isDark = theme === "dark";
+    
+    // Apply class immediately
+    if (isDark) {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-    // Store in localStorage
+    
+    // Store in localStorage immediately to mark as user preference
     localStorage.setItem(THEME_STORAGE_KEY, theme);
+    
+    console.log("[ThemeContext] Theme applied:", theme, "Dark class:", root.classList.contains("dark"));
   }, [theme]);
 
-  // Listen for system theme changes
+  // Listen for system theme changes (only if user hasn't set a preference)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
       // Only auto-switch if user hasn't manually set a preference
+      // Check if localStorage has a user-set preference
       const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      if (!stored) {
-        setThemeState(e.matches ? "dark" : "light");
+      // If no stored preference, follow system preference
+      if (!stored || stored === "") {
+        const newTheme = e.matches ? "dark" : "light";
+        console.log("[ThemeContext] System theme changed, updating to:", newTheme);
+        setThemeState(newTheme);
+      } else {
+        console.log("[ThemeContext] System theme changed but user preference exists, ignoring");
       }
     };
 
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    // Only add listener if no user preference is set
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (!stored || stored === "") {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
       const newTheme = prev === "light" ? "dark" : "light";
       console.log("[ThemeContext] Toggling theme from", prev, "to", newTheme);
+      
+      // Immediately update localStorage and DOM to prevent delay
+      if (typeof window !== "undefined") {
+        localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+        const root = document.documentElement;
+        if (newTheme === "dark") {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
+        }
+        console.log("[ThemeContext] Theme applied immediately - newTheme:", newTheme, "dark class:", root.classList.contains("dark"));
+      }
+      
       return newTheme;
     });
   }, []);
