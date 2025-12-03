@@ -16,7 +16,7 @@ export function getUserFriendlyError(status: number | undefined, defaultMessage?
     401: 'Your session has expired. Please log in again.',
     403: 'You don\'t have permission to perform this action.',
     404: 'The requested item could not be found.',
-    409: 'This item already exists. Please try a different option.',
+    409: 'YouTube API quota limit has been reached. Please try again after 24 hours.',
     422: 'The information provided is invalid. Please check and try again.',
     423: 'Your account is temporarily locked. Please try again later.',
     429: 'Too many requests. Please wait a moment and try again.',

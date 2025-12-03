@@ -490,6 +490,12 @@ export default function PublicPlaylistDestination() {
       return
     }
 
+    // Validate 20-song limit for YouTube destination
+    if (destinationPlatform === 'youtube' && playlist.trackCount && playlist.trackCount > 20) {
+      setError(`This playlist contains ${playlist.trackCount} songs. Maximum allowed is 20 songs per transfer.`)
+      return
+    }
+
     setCreating(true)
     setError(null)
     try {
@@ -522,9 +528,18 @@ export default function PublicPlaylistDestination() {
       })
     } catch (err: any) {
       console.error('[PublicPlaylistDestination] Transfer start failed:', err)
-      setError(
-        err.message || "We couldn't start the transfer. Please check your connection and try again."
-      )
+      
+      // Handle 409 Conflict (YouTube quota exceeded)
+      if (err?.status === 409 || err?.message?.includes('409') || err?.message?.includes('quota')) {
+        setError('YouTube API quota limit has been reached. Please try again after 24 hours.')
+      } else if (err?.status === 400 && err?.message?.includes('Maximum allowed is')) {
+        // Handle 400 Bad Request (20-song limit exceeded)
+        setError(err.message || 'Playlist exceeds the maximum allowed song limit.')
+      } else {
+        // Use user-friendly error message utility
+        const { getErrorMessage } = await import('@/utils/userMessages')
+        setError(getErrorMessage(err, 'start the transfer'))
+      }
     } finally {
       setCreating(false)
     }

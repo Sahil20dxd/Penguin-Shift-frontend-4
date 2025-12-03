@@ -366,6 +366,20 @@ export default function SelectDestination() {
         response: e?.response
       })
       
+      // Handle 409 Conflict (YouTube quota exceeded)
+      if (e?.status === 409 || errorMessage?.includes('409') || errorMessage?.includes('quota')) {
+        setError('YouTube API quota limit has been reached. Please try again after 24 hours.')
+        setCreating(false)
+        return
+      }
+      
+      // Handle 400 Bad Request (20-song limit exceeded)
+      if (e?.status === 400 && errorMessage?.includes('Maximum allowed is')) {
+        setError(errorMessage || 'Playlist exceeds the maximum allowed song limit of 20 songs.')
+        setCreating(false)
+        return
+      }
+      
       // Use user-friendly error message
       const friendlyError = getErrorMessage(e, 'start the transfer')
       setError(friendlyError)
