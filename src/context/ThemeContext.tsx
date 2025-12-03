@@ -20,21 +20,37 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(undefine
 const THEME_STORAGE_KEY = "penguinshift_theme";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
+  // Initialize theme - apply immediately to prevent flash
+  const getInitialTheme = (): Theme => {
     // Check localStorage first
-    const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    if (stored === "light" || stored === "dark") {
-      return stored;
-    }
-    // Fallback to system preference
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+      if (stored === "light" || stored === "dark") {
+        // Apply immediately
+        const root = document.documentElement;
+        if (stored === "dark") {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
+        }
+        return stored;
+      }
+      // Fallback to system preference
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.classList.add("dark");
+        return "dark";
+      }
+      document.documentElement.classList.remove("dark");
     }
     return "light";
-  });
+  };
 
-  // Apply theme to document
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+
+  // Apply theme to document whenever it changes
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
@@ -61,7 +77,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === "light" ? "dark" : "light"));
+    setThemeState((prev) => {
+      const newTheme = prev === "light" ? "dark" : "light";
+      console.log("[ThemeContext] Toggling theme from", prev, "to", newTheme);
+      return newTheme;
+    });
   }, []);
 
   const setTheme = useCallback((newTheme: Theme) => {

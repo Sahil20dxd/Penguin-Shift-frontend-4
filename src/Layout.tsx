@@ -190,9 +190,15 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={toggleTheme}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("[Layout] Theme toggle clicked, current theme:", theme);
+                    toggleTheme();
+                  }}
                   className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
                   aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  type="button"
                 >
                   {theme === "dark" ? (
                     <Sun className="w-5 h-5" />
@@ -299,9 +305,15 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={toggleTheme}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("[Layout] Mobile theme toggle clicked, current theme:", theme);
+                      toggleTheme();
+                    }}
                     className="text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 transition-colors"
                     aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    type="button"
                   >
                     {theme === "dark" ? (
                       <Sun className="w-5 h-5" />
