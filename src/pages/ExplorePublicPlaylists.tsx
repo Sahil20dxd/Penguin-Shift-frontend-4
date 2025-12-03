@@ -8,7 +8,7 @@ import { SkeletonPlaylistCard } from "@/components/ui/skeleton-loader";
 import { AnimatePresence, motion } from "framer-motion";
 import { SearchX } from "lucide-react";
 import { getExplorePublicPlaylists, type PaginatedPlaylistsResponse } from "@/api/publicPlaylists";
-import SearchBar from "@/components/explore/SearchBar";
+import AutocompleteSearchBar from "@/components/explore/AutocompleteSearchBar";
 import FiltersBar from "@/components/explore/FiltersBar";
 import AppliedFiltersChips from "@/components/explore/AppliedFiltersChips";
 import PlaylistCard from "@/components/explore/PlaylistCard";
@@ -243,10 +243,14 @@ export default function ExplorePublicPlaylists() {
         </div>
 
         <div className="mb-4 md:mb-6">
-          <SearchBar
+          <AutocompleteSearchBar
             value={searchQuery}
             onChange={setSearchQuery}
             onClear={() => setSearchQuery("")}
+            onSelect={(value) => {
+              setSearchQuery(value);
+              // Optionally trigger search immediately
+            }}
           />
         </div>
 

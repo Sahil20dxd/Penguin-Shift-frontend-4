@@ -2,6 +2,7 @@
 @import "tailwindcss/preflight";
 @import "tailwindcss/theme";
 @import "tailwindcss/utilities";
+@import "react-day-picker/dist/style.css";
 
 /* Performance optimizations */
 @layer base {

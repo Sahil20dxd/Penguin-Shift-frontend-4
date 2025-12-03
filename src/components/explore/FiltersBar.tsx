@@ -11,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Filter, ChevronDown, ChevronUp } from 'lucide-react'
 import { MUSIC_GENRES } from '@/constants/genres'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -219,13 +220,12 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
             >
               Created From
             </Label>
-            <Input
+            <DatePicker
               id='date-from'
-              type='date'
               value={filters.createdFrom || ''}
-              onChange={e => onFilterChange('createdFrom', e.target.value)}
-              aria-label='Created date from'
-              className='h-11 md:h-10 text-base bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-slate-600'
+              onChange={(value) => onFilterChange('createdFrom', value)}
+              placeholder='Select date'
+              ariaLabel='Created date from'
             />
           </div>
         </div>
@@ -366,13 +366,12 @@ export default function FiltersBar({ filters, onFilterChange }: FiltersBarProps)
                 >
                   Created From
                 </Label>
-                <Input
+                <DatePicker
                   id='date-from-mobile'
-                  type='date'
                   value={filters.createdFrom || ''}
-                  onChange={e => onFilterChange('createdFrom', e.target.value)}
-                  aria-label='Created date from'
-                  className='h-11 text-base bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-slate-600'
+                  onChange={(value) => onFilterChange('createdFrom', value)}
+                  placeholder='Select date'
+                  ariaLabel='Created date from'
                 />
               </div>
             </div>
