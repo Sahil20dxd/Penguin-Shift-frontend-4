@@ -212,12 +212,33 @@ export async function apiJsonPublic(path: string, options: RequestInit = {}) {
 
 /**
  * Fetch binary data (blobs) from API
+ * Includes Authorization header for secure endpoints
  */
 export async function apiBlob(path: string, options: RequestInit = {}) {
+  // Always try to get token from localStorage (primary method for cross-origin)
+  const accessToken = localStorage.getItem("penguinshift_access_token")
+  
+  // Build headers - always include Authorization if token exists
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> || {})
+  }
+  
+  // CRITICAL: Always add Authorization header if token is available
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+    if (import.meta.env.DEV) {
+      console.log(`[apiBlob] ✅ Adding Authorization header for ${path}`)
+    }
+  } else {
+    if (import.meta.env.DEV) {
+      console.warn(`[apiBlob] ⚠️ No access token found in localStorage for ${path}`)
+    }
+  }
+  
   const res = await fetch(API_BASE + path, {
     ...options,
-    credentials: 'include',
-    headers: options.headers || {}
+    credentials: 'include', // Always include credentials for cookie-based auth fallback
+    headers
   })
   
   if (!res.ok) {

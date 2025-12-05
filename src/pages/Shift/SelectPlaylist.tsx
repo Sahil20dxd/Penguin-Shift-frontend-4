@@ -334,14 +334,25 @@ export default function SelectPlaylist() {
       setPlaylists([]);
 
       const API_BASE = getApiBase();
+      // Get token from localStorage for Authorization header
+      const accessToken = localStorage.getItem("penguinshift_access_token");
+      
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      
+      // CRITICAL: Always add Authorization header if token exists
+      // The backend requires the Authorization header for secure endpoints
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+      
       const res = await fetch(
         `${API_BASE}/api/platforms/force-reconnect/${localPlatform}`,
         {
           method: "POST",
-          credentials: "include", // Use HTTP-only cookies for authentication
-          headers: {
-            "Content-Type": "application/json",
-          },
+          credentials: "include", // Always include credentials for cookie-based auth fallback
+          headers,
         }
       );
 

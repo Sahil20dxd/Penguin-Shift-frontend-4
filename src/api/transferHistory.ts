@@ -11,12 +11,11 @@ import { getApiBase } from '@/utils/apiConfig'
 
 const API_BASE = getApiBase()
 
-// Removed localStorage token access for security - rely on HTTP-only cookies only
-// Tokens are stored in HTTP-only cookies by the backend
-function getAuthToken(): string {
-  // Return empty string - authentication is handled via HTTP-only cookies
-  // Backend will validate the cookie automatically when credentials: 'include' is used
-  return '';
+// Get authentication token from localStorage
+// The backend supports both Authorization header and HTTP-only cookies
+// We use the Authorization header as the primary method for cross-origin requests
+function getAuthToken(): string | null {
+  return localStorage.getItem("penguinshift_access_token");
 }
 
 /**
@@ -80,15 +79,18 @@ export async function downloadTransferHistoryCSV(id: number): Promise<void> {
     'Content-Type': 'application/json',
   };
 
-  // Only add Authorization header if token exists (supports cookie-based auth too)
+  // CRITICAL: Always add Authorization header if token exists
+  // The backend requires the Authorization header for secure endpoints
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    throw new Error('Authentication token not found. Please log in again.');
   }
 
   const response = await fetch(requestUrl, {
     method: 'GET',
     headers,
-    credentials: 'include', // Always include credentials for cookie-based auth
+    credentials: 'include', // Always include credentials for cookie-based auth fallback
   });
 
   if (!response.ok) {
@@ -142,15 +144,18 @@ export async function downloadTransferHistoryPDF(id: number): Promise<void> {
 
   const headers: HeadersInit = {};
 
-  // Only add Authorization header if token exists (supports cookie-based auth too)
+  // CRITICAL: Always add Authorization header if token exists
+  // The backend requires the Authorization header for secure endpoints
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    throw new Error('Authentication token not found. Please log in again.');
   }
 
   const response = await fetch(requestUrl, {
     method: 'GET',
     headers,
-    credentials: 'include', // Always include credentials for cookie-based auth
+    credentials: 'include', // Always include credentials for cookie-based auth fallback
   });
 
   if (!response.ok) {
