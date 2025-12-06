@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/context/useAuth";
 import { Repeat, Music2, Globe, TrendingUp, Clock, ArrowRight } from "lucide-react";
-import { createPageUrl } from "@/utils";
 
 export default function DashboardPage() {
   usePageTitle('Dashboard');

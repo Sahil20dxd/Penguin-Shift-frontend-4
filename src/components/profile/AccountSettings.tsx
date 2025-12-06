@@ -53,7 +53,7 @@ export default function AccountSettings() {
   const [editingUsername, setEditingUsername] = useState(false)
   const [editingEmail, setEditingEmail] = useState(false)
   const [username, setUsername] = useState(user?.username ?? '')
-  const [email, setEmail] = useState(user?.email ?? '')
+  const [_email, setEmail] = useState(user?.email ?? '')
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
   const [usernameModerationError, setUsernameModerationError] = useState<string | null>(null)
   const [savingUsername, setSavingUsername] = useState(false)

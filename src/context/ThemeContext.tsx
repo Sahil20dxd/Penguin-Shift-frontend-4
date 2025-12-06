@@ -64,8 +64,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     
     // Store in localStorage immediately to mark as user preference
     localStorage.setItem(THEME_STORAGE_KEY, theme);
-    
-    console.log("[ThemeContext] Theme applied:", theme, "Dark class:", root.classList.contains("dark"));
   }, [theme]);
 
   // Listen for system theme changes (only if user hasn't set a preference)
@@ -80,10 +78,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       // If no stored preference, follow system preference
       if (!stored || stored === "") {
         const newTheme = e.matches ? "dark" : "light";
-        console.log("[ThemeContext] System theme changed, updating to:", newTheme);
         setThemeState(newTheme);
-      } else {
-        console.log("[ThemeContext] System theme changed but user preference exists, ignoring");
       }
     };
 
@@ -98,7 +93,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
       const newTheme = prev === "light" ? "dark" : "light";
-      console.log("[ThemeContext] Toggling theme from", prev, "to", newTheme);
       
       // Immediately update localStorage and DOM to prevent delay
       if (typeof window !== "undefined") {
@@ -109,7 +103,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         } else {
           root.classList.remove("dark");
         }
-        console.log("[ThemeContext] Theme applied immediately - newTheme:", newTheme, "dark class:", root.classList.contains("dark"));
       }
       
       return newTheme;

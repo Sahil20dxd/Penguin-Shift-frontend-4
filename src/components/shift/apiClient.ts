@@ -40,13 +40,24 @@ export async function apiJson(path: string, options: RequestInit = {}) {
     mergedHeaders['Authorization'] = `Bearer ${accessToken}`
   }
   
-  const headers = addCsrfToken(mergedHeaders)
+  // Convert headers to plain object to ensure they're properly serialized
+  const headersObj = addCsrfToken(mergedHeaders)
+  // Ensure headers is a plain object (not Headers instance) for fetch
+  const finalHeaders: Record<string, string> = headersObj instanceof Headers
+    ? Object.fromEntries(headersObj.entries())
+    : (headersObj as Record<string, string>)
+  
+  // CRITICAL: Ensure Authorization header is always set if we have a token
+  if (accessToken && !finalHeaders['Authorization']) {
+    finalHeaders['Authorization'] = `Bearer ${accessToken}`
+  }
   
   // Debug: Log if Authorization header is being sent (only in development)
   if (import.meta.env.DEV) {
     console.log(`[apiJson] Request to ${path}:`, {
       hasToken: !!accessToken,
-      hasAuthHeader: !!headers['Authorization'],
+      hasAuthHeader: !!finalHeaders['Authorization'],
+      authHeaderValue: finalHeaders['Authorization'] ? finalHeaders['Authorization'].substring(0, 20) + '...' : 'none',
       method: options.method || 'GET'
     })
   }
@@ -54,16 +65,17 @@ export async function apiJson(path: string, options: RequestInit = {}) {
   // Log final headers being sent (in dev mode)
   if (import.meta.env.DEV) {
     console.log(`[apiJson] Final headers for ${path}:`, {
-      hasAuthorization: !!headers['Authorization'],
-      hasContentType: !!headers['Content-Type'],
-      hasCsrf: !!headers['X-CSRF-TOKEN']
+      hasAuthorization: !!finalHeaders['Authorization'],
+      hasContentType: !!finalHeaders['Content-Type'],
+      hasCsrf: !!finalHeaders['X-CSRF-TOKEN'],
+      allHeaders: Object.keys(finalHeaders)
     })
   }
   
   let res = await fetch(API_BASE + path, {
     ...options,
     credentials: 'include',
-    headers
+    headers: finalHeaders
   })
   
   // Log response status
@@ -108,10 +120,13 @@ export async function apiJson(path: string, options: RequestInit = {}) {
       retryHeaders['X-CSRF-TOKEN'] = csrfToken
     }
     
+    // Ensure headers is a plain object (not Headers instance)
+    const retryFinalHeaders: Record<string, string> = retryHeaders
+    
     res = await fetch(API_BASE + path, {
       ...options,
       credentials: 'include',
-      headers: retryHeaders
+      headers: retryFinalHeaders
     })
   }
 

@@ -39,3 +39,34 @@ global.IntersectionObserver = class IntersectionObserver {
   unobserve() {}
 } as any;
 
+// Polyfill TextEncoder/TextDecoder for React Router
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+
+// Mock import.meta.env
+Object.defineProperty(global, 'import', {
+  value: {
+    meta: {
+      env: {
+        DEV: true,
+        PROD: false,
+        VITE_API_BASE: undefined,
+      }
+    }
+  },
+  writable: true,
+  configurable: true
+});
+
+// Make import.meta available globally for Jest
+(global as any).import = {
+  meta: {
+    env: {
+      DEV: true,
+      PROD: false,
+      VITE_API_BASE: undefined,
+    }
+  }
+};
+

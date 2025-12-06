@@ -58,7 +58,7 @@ interface ActiveUsersResponse {
 
 export default function ActiveUsers() {
   const { authFetch } = useAuth();
-  const { showToast, Toast } = useToast();
+  const { Toast } = useToast();
   const [users, setUsers] = useState<ActiveUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

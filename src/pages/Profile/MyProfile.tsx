@@ -30,14 +30,17 @@ export default function MyProfile() {
   // inside component
   const { user, authFetch } = useAuth();
   usePageTitle('My Profile');
-  if (!user) return <Navigate to="/auth?mode=login" replace />;
   
-  // Set initial tab based on user role
+  // Set initial tab based on user role - calculate before hooks
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'CURATOR' 
     || user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_CURATOR';
+  
+  // All hooks must be called before any early returns
   const [activeTab, setActiveTab] = useState(isAdmin ? "settings" : "history");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMaster, setIsMaster] = useState(false);
+  
+  if (!user) return <Navigate to="/auth?mode=login" replace />;
 
   // Check if user is master account
   useEffect(() => {

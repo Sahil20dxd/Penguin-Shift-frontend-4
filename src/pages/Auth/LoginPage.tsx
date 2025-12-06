@@ -11,7 +11,6 @@ import { createPageUrl } from "@/utils";
 import { useAuth } from "@/context/useAuth";
 import { useToast } from "@/hooks/useToast";
 import {
-  loadTurnstile,
   renderTurnstile,
   getTurnstileToken,
   resetTurnstile,

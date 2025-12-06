@@ -69,7 +69,7 @@ export default function ContactPage() {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null);
+  const [_openFAQIndex, _setOpenFAQIndex] = useState<number | null>(null);
   const [expandedFAQs, setExpandedFAQs] = useState<Set<number>>(new Set());
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

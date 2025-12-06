@@ -149,7 +149,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
             {/* Nav Links */}
             <nav className="flex items-center gap-2">
-              {filteredNavItems.map((item, index) => {
+              {filteredNavItems.map((item) => {
                 // Determine if this URL should use prefix matching (for routes with sub-paths like /shift)
                 const usePrefixMatching = item.url.startsWith("/shift");
                 
@@ -321,7 +321,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
               </SheetHeader>
 
               <nav className="flex flex-col gap-2 mt-6 md:mt-8">
-                {filteredNavItems.map((item, index) => {
+                {filteredNavItems.map((item) => {
                   // Determine if this URL should use prefix matching (for routes with sub-paths like /shift)
                   const usePrefixMatching = item.url.startsWith("/shift");
                   

@@ -9,10 +9,8 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
-import { createPageUrl } from '@/utils'
 import { useToast } from '@/hooks/useToast'
 import {
-  loadTurnstile,
   renderTurnstile,
   getTurnstileToken,
   resetTurnstile,

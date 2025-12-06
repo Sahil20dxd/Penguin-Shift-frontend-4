@@ -76,7 +76,7 @@ type PlaylistDetailsDrawerProps = {
 };
 
 /** Format single track duration in seconds to m:ss */
-function formatDuration(seconds?: number): string {
+function _formatDuration(seconds?: number): string {
   if (!seconds || seconds <= 0) return "0:00";
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -172,7 +172,7 @@ export default function PlaylistDetailsDrawer({
       setLoadingTracks(true);
       getTransferHistoryTracksByTransferId(playlist.transferId)
         .then(setTracks)
-        .catch((error) => {
+        .catch(() => {
           setTracksError('Failed to load tracks. Please try again');
         })
         .finally(() => setLoadingTracks(false));
